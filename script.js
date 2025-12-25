@@ -18,7 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATABASE ---
     const DB = {
-        get: (key) => JSON.parse(localStorage.getItem(key)) || [],
+        get: (key) => {
+            try {
+                const data = JSON.parse(localStorage.getItem(key));
+                return Array.isArray(data) ? data : [];
+            } catch (e) {
+                return [];
+            }
+        },
         set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
     };
 
@@ -102,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // SECURITY CHECK
         if(pageId === 'admin-page' && !currentUser.id) {
             document.getElementById('login-overlay').style.display = 'flex';
-            document.getElementById('login-device-id').value = myDeviceId;
+            const devInput = document.getElementById('login-device-id');
+            if(devInput) devInput.value = myDeviceId;
             return;
         }
 
@@ -119,25 +127,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageId === 'orders-page') setTimeout(preloadSubPages, 200);
         
         setTimeout(() => {
-            const targetPage = document.getElementById(pageId);
-            if (targetPage) {
-                if (pageId === 'home-page') renderHomePageContent();
-                else if (pageId === 'orders-page') renderAllOrdersPageContent();
-                else if (pageId === 'details-page' && params) renderOrderDetails(params.id);
-                else if (pageId === 'image-page' && params) renderImagePage(params);
-                else if (pageId === 'track-page' && params) { renderTrackPage(params.id); adjustStickyHeaderTop(); }
-                else if (pageId === 'order-summary-page' && params) renderOrderSummaryPage(params.id);
-                else if (pageId === 'invoice-page' && params) renderInvoicePage(params.id);
-                else if (pageId === 'admin-page') renderAdminPanel();
-                
-                pages.forEach(page => { if (page.id !== pageId) page.classList.remove('active'); });
-                targetPage.classList.add('active');
-                
-                if (isBackNavigation && pageScrollPositions[pageId] !== undefined) window.scrollTo(0, pageScrollPositions[pageId]);
-                else window.scrollTo(0, 0);
-                isBackNavigation = false;
+            try {
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    if (pageId === 'home-page') renderHomePageContent();
+                    else if (pageId === 'orders-page') renderAllOrdersPageContent();
+                    else if (pageId === 'details-page' && params) renderOrderDetails(params.id);
+                    else if (pageId === 'image-page' && params) renderImagePage(params);
+                    else if (pageId === 'track-page' && params) { renderTrackPage(params.id); adjustStickyHeaderTop(); }
+                    else if (pageId === 'order-summary-page' && params) renderOrderSummaryPage(params.id);
+                    else if (pageId === 'invoice-page' && params) renderInvoicePage(params.id);
+                    else if (pageId === 'admin-page') renderAdminPanel();
+                    
+                    pages.forEach(page => { if (page.id !== pageId) page.classList.remove('active'); });
+                    targetPage.classList.add('active');
+                    
+                    if (isBackNavigation && pageScrollPositions[pageId] !== undefined) window.scrollTo(0, pageScrollPositions[pageId]);
+                    else window.scrollTo(0, 0);
+                    isBackNavigation = false;
+                }
+            } catch (err) {
+                console.error("Page Render Error:", err);
+            } finally {
+                loader.classList.remove('visible'); // ENSURE LOADER ALWAYS REMOVED
             }
-            loader.classList.remove('visible');
         }, 1000);
     }
 
@@ -266,7 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = (item && item.imagePageUrl) ? `<img src="${item.imagePageUrl}">` : '<p>Image not available.</p>';
     }
 
-    // --- FULL PAGE RENDERS (RESTORED) ---
     function renderOrderDetails(itemId) {
         const item = DB.get('purchaseHistoryItems').find(p => p.id === itemId);
         const container = document.getElementById('order-details-content');
@@ -450,14 +462,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isBuyAgain) {
             allInputs.forEach(el => {
-                if (el.id !== 'itemImage') { // Only Image URL enabled
+                if (el.id !== 'itemImage') { 
                     el.disabled = true;
                     if(el.type !== 'checkbox') el.value = '';
                 } else {
                     el.disabled = false;
                 }
             });
-            // FIX: Ensure Name is also cleared/disabled if previously filled
+            // FIX: Ensure Name is cleared/disabled
             itemForm.itemName.value = ''; 
             itemForm.itemName.disabled = true;
 
@@ -496,11 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isNew = !editingId;
         const isBuyAgain = itemTypeSelect.value === 'buyAgain';
         const isPremium = premiumToggle.checked;
-
-        const cost = isBuyAgain ? 0 : (isPremium ? 1200 : 500);
-        
-        // Removed balance check for ADD as requested, but logic is here if needed
-        // if (isNew && currentUser.rs < cost) { showCustomAlert(`Insufficient Balance!`); return; }
 
         saveBtn.disabled = true;
         const originalText = saveBtn.textContent;
@@ -617,7 +624,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('wallet-cancel-btn').addEventListener('click', () => document.getElementById('wallet-key-modal').style.display = 'none');
 
     // --- LOGIN ---
-    document.getElementById('login-device-id').value = myDeviceId;
+    const devInput = document.getElementById('login-device-id');
+    if(devInput) devInput.value = myDeviceId;
+    
     document.getElementById('copy-device-btn').addEventListener('click', () => {
         navigator.clipboard.writeText(myDeviceId);
         showCustomAlert("Device ID Copied!");
