@@ -1145,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('add-new-item-btn').addEventListener('click', () => {
-        if(currentUser.rs < 100) { showCustomAlert('Insufficient Balance (Need 100 Rs)'); return; }
+        if(currentUser.rs < 500) { showCustomAlert('Insufficient Balance (Need 500 Rs)'); return; }
         openModalForNew();
     });
 
@@ -1155,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isNew = !editingId;
         const type = itemForm.itemType.value;
         
-        if(isNew && currentUser.rs < 100) { showCustomAlert('Insufficient Balance'); return; }
+        if(isNew && currentUser.rs < 500) { showCustomAlert('Insufficient Balance'); return; }
 
         const btn = document.getElementById('modal-save-btn');
         const originalBtnText = btn.textContent;
@@ -1306,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const validOrder = items.find(item => (item.orderNumber === orderNum || item.id.toString() === orderNum) && item.orderDate === today);
         
         if(!validOrder) { showCustomAlert('Invalid Order! Date must be TODAY.'); return; }
-        if(currentUser.rs < 500) { showCustomAlert('Insufficient Balance (Need 500 Rs)'); return; }
+        if(currentUser.rs < 650) { showCustomAlert('Insufficient Balance (Need 650 Rs)'); return; }
         
         const btn = document.getElementById('api-pay-btn');
         btn.innerHTML = '<span class="loading-spinner"></span> Processing...';
@@ -1329,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
              } catch(e) { showCustomAlert("Network Error"); }
         }
-        btn.innerHTML = 'Pay 500Rs';
+        btn.innerHTML = 'Pay 650Rs';
     });
 
     // Notifications
