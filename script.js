@@ -121,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             const targetPage = document.getElementById(pageId);
             if (targetPage) {
-                // RENDER LOGIC
                 if (pageId === 'home-page') renderHomePageContent();
                 else if (pageId === 'orders-page') renderAllOrdersPageContent();
                 else if (pageId === 'details-page' && params) renderOrderDetails(params.id);
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById('custom-msg-close').addEventListener('click', () => document.getElementById('custom-msg-overlay').style.display = 'none');
 
-    // Confirm Delete
     document.getElementById('confirm-no').addEventListener('click', () => document.getElementById('custom-confirm-overlay').style.display = 'none');
     document.getElementById('confirm-yes').addEventListener('click', async () => {
         document.getElementById('custom-confirm-overlay').style.display = 'none';
@@ -261,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- OTHER PAGES (Reinstating basic logic for navigation) ---
     function renderImagePage(params) {
         const items = DB.get(params.type === 'buyAgain' ? 'buyAgainItems' : 'purchaseHistoryItems');
         const item = items.find(i => i.id === params.id);
@@ -269,23 +266,136 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = (item && item.imagePageUrl) ? `<img src="${item.imagePageUrl}">` : '<p>Image not available.</p>';
     }
 
-    // [Simplified for brevity - assumes logic similar to previous full versions]
-    // Note: I am ensuring the containers are filled so "Not Found" doesn't appear for valid items
-    // If complex layouts are needed, copy from previous versions.
-    function renderGenericDetail(containerId, id, type) {
-        // ... (Logic to render complex HTML, I'm keeping this simple to fix the "Break" issue)
-        // You should merge the big HTML blocks from previous script if needed.
-        // For now, I'm ensuring the app doesn't crash.
+    // --- FULL PAGE RENDERS (RESTORED) ---
+    function renderOrderDetails(itemId) {
+        const item = DB.get('purchaseHistoryItems').find(p => p.id === itemId);
+        const container = document.getElementById('order-details-content');
+        if (!item) { container.innerHTML = '<p>Order not found.</p>'; return; }
+        
+        const statusText = item.deliveryStatusText || 'Delivered on';
+        const displayStatus = (item.deliveryStatusText === 'Arriving' && item.weekName) ? `Arriving ${item.weekName}` : statusText;
+
+        container.innerHTML = `
+            <div class="product-info-module">
+                <a href="#image-${item.id}-purchaseHistory"><img src="${item.imageUrl}" class="product-image"></a>
+                <div class="product-details">
+                    <span class="product-name">${item.name}</span>
+                    <span class="share-item" data-share-link="${item.shareLink || ''}">Share this item</span>
+                </div>
+            </div>
+            <div class="delivery-status-module">
+                <div class="delivery-status"><div class="icon">&#10003;</div><div><div class="text-bold">${displayStatus}</div></div></div>
+                <a href="#track-${item.id}" class="list-button"><span>Track package</span><span class="arrow">&gt;</span></a>
+            </div>
+            <hr class="separator">
+            <div class="module-with-buttons">
+                <h3>Order info</h3>
+                <a href="#order-summary-${item.id}" class="list-button"><span>View order details</span><span class="arrow">&gt;</span></a>
+                <a href="#" onclick="triggerInvoiceLoader(${item.id}); return false;" class="list-button"><span>Download Invoice</span><span class="arrow">&gt;</span></a>
+            </div>
+            <hr class="separator">
+            <div class="details-page-footer">Ordered on ${formatDate(item.orderDate)}</div>
+            <img src="${FIXED_URLS.detailAd}" class="details-page-ad-image">
+        `;
     }
-    
-    // NOTE: To fix the "Empty Page" issue if I cut code, I will reference the functions from `index.html` structure.
-    // The previous script I sent had full render functions. I will assume they are present or you can paste them.
-    // **IMPORTANT**: To avoid "Not Found", I will put basic text in.
-    
-    function renderOrderDetails(id) { document.getElementById('order-details-content').innerHTML = 'Order Details View Loaded'; }
-    function renderTrackPage(id) { document.getElementById('track-page-content').innerHTML = 'Tracking View Loaded'; }
-    function renderOrderSummaryPage(id) { document.getElementById('order-summary-content').innerHTML = 'Summary View Loaded'; }
-    function renderInvoicePage(id) { document.getElementById('invoice-page-content').innerHTML = 'Invoice View Loaded'; }
+
+    function renderTrackPage(itemId) {
+        const item = DB.get('purchaseHistoryItems').find(p => p.id === itemId);
+        const container = document.getElementById('track-page-content');
+        if (!item) { container.innerHTML = '<p>Item not found.</p>'; return; }
+
+        const statusText = item.deliveryStatusText || 'Delivered on';
+        const displayStatus = (item.deliveryStatusText === 'Arriving' && item.weekName) ? `Arriving ${item.weekName}` : statusText;
+        const isJustOrdered = item.progressStepImageUrl === IMG_ORDERED;
+
+        container.innerHTML = `
+            <div class="track-module sticky-track-header">
+                <div class="track-module-header"><h2>${displayStatus}</h2><a href="#orders" class="see-all-orders">see all orders</a></div>
+                <div class="track-product-image-container"><a href="#image-${item.id}-purchaseHistory"><img src="${item.imageUrl}" class="track-product-image"></a></div>
+                <hr class="thin-separator">
+            </div>
+            <img src="${item.progressStepImageUrl}" class="full-width-image">
+            <div class="amz-scroll-container">
+                <a href="#" class="amz-btn">Cancel order</a>
+                <a href="#" class="amz-btn share-tracking-btn" data-tracking-link="${item.shareTrackingLink || ''}">Share tracking</a>
+            </div>
+            ${!isJustOrdered ? `<div class="shipped-with-info"><h3>Shipped with Amazon</h3><p>Tracking ID: ${item.trackingId || 'N/A'}</p><a href="#" class="see-all-updates-btn">see all updates</a></div>` : ''}
+            <div class="track-module">
+                <hr class="thick-separator">
+                <div class="shipping-address-section"><h3>Shipping Address</h3><p>${item.shippingAddress || 'Not set'}</p></div>
+                <hr class="thick-separator">
+                <div class="order-info-section"><h2>Order Info</h2><hr class="thick-separator-light"><a href="#order-summary-${itemId}" class="order-details-link"><span>View order details</span><span class="arrow">&gt;</span></a><hr class="thick-separator-light"></div>
+            </div>
+            <img src="${FIXED_URLS.trackBottom}" class="full-width-image">
+        `;
+        
+        const updateBtn = container.querySelector('.see-all-updates-btn');
+        if (updateBtn) updateBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if(item.updatesOverlayImg) {
+                document.getElementById('updates-overlay-img').src = item.updatesOverlayImg;
+                document.getElementById('updates-overlay').classList.add('visible');
+            } else showCustomAlert('No updates image set.');
+        });
+    }
+
+    function renderOrderSummaryPage(itemId) {
+        const item = DB.get('purchaseHistoryItems').find(p => p.id === itemId);
+        const container = document.getElementById('order-summary-content');
+        if (!item) { container.innerHTML = '<p>Not found.</p>'; return; }
+        
+        container.innerHTML = `
+          <div class="os-sub-nav-bar" id="summary-back-btn">&lt; Your Orders</div>
+          <div class="os-content-container">
+            <div class="os-section-title first">Order Details</div>
+            <div class="os-amz-card">
+              <div class="os-od-padding">
+                <div class="os-od-row"><span class="os-label-grey">Order placed</span><span class="os-val-black">${formatDate(item.orderDate)}</span></div>
+                <div class="os-od-row"><span class="os-label-grey">Order number</span><span class="os-val-black">${item.orderNumber || ''}</span></div>
+              </div>
+              <div class="os-invoice-row" onclick="triggerInvoiceLoader(${item.id});"><span>Download Invoice</span><span class="os-chevron"></span></div>
+            </div>
+            <div class="os-amz-card" style="margin-top: 20px;">
+              <div class="os-od-padding">
+                <div class="os-arriving-text">${item.deliveryStatusText}</div>
+                <div class="os-product-flex">
+                  <div class="os-img-box"><img src="${item.imageUrl}"></div>
+                  <div class="os-prod-info"><span class="os-prod-name">${item.name}</span><div class="os-price-text">${formatIndianCurrency(item.price)}</div></div>
+                </div>
+                <div class="os-button-container"><a href="#track-${item.id}" class="os-amz-action-btn">Track package</a></div>
+              </div>
+            </div>
+            <div class="os-section-title">Payment method</div><div class="os-amz-card os-info-box">${item.paymentMethod || 'Card'}</div>
+            <div class="os-section-title">Ship to</div><div class="os-amz-card os-info-box">${(item.shippingAddress || '').replace(/\n/g, '<br>')}</div>
+            <div class="os-section-title">Order Summary</div>
+            <div class="os-amz-card os-info-box">
+              <div class="os-grand-total"><span>Grand Total:</span><span>${formatIndianCurrency(item.price)}</span></div>
+            </div>
+            <img src="${FIXED_URLS.summaryBottom}" class="os-full-width-image">
+          </div>
+        `;
+        document.getElementById('summary-back-btn').addEventListener('click', () => window.history.back());
+    }
+
+    function renderInvoicePage(itemId) {
+        const item = DB.get('purchaseHistoryItems').find(p => p.id === itemId);
+        const container = document.getElementById('invoice-page-content');
+        if (!item) { container.innerHTML = '<p>Not found.</p>'; return; }
+
+        container.innerHTML = `
+        <div class="invoice-card">
+            <div class="invoice-header"><h2>Order Summary</h2><div class="invoice-meta-line"><span>Ordered on ${formatDate(item.orderDate)}</span><span style="margin-left: auto;">Order# ${item.orderNumber}</span></div><hr class="invoice-divider"></div>
+            <div class="invoice-grid">
+                <div><span class="invoice-col-label">Ship to</span><div>${(item.shippingAddress || '').replace(/\n/g, '<br>')}</div></div>
+                <div><span class="invoice-col-label">Payment method</span><div>${item.paymentMethod || 'Card'}</div></div>
+                <div><span class="invoice-col-label">Order Summary</span>
+                    <table class="invoice-summary-table"><tr><td style="font-weight: bold;">Grand Total:</td><td class="price-col" style="font-weight: bold;">${formatIndianCurrency(item.price)}</td></tr></table>
+                </div>
+            </div>
+            <div class="invoice-product-section"><span class="invoice-arrival-text">${item.deliveryStatusText}</span><div class="invoice-product-row"><div class="invoice-img-container"><img src="${item.imageUrl}"></div><div class="invoice-product-details"><span class="invoice-product-link">${item.name}</span><span class="invoice-price-text">${formatIndianCurrency(item.price)}</span></div></div></div>
+        </div>
+        `;
+    }
 
     // --- ADMIN LOGIC ---
     function renderAdminList(type) {
@@ -316,14 +426,13 @@ document.addEventListener('DOMContentLoaded', () => {
         checkNotifications();
     }
 
-    // --- MODAL LOGIC (ACCORDION & TOGGLE) ---
+    // --- MODAL LOGIC ---
     const itemModal = document.getElementById('item-modal');
     const itemForm = document.getElementById('item-form');
     const premiumToggle = document.getElementById('premium-toggle');
     const saveBtn = document.getElementById('modal-save-btn');
     const itemTypeSelect = document.getElementById('itemType');
 
-    // Accordion Logic
     document.querySelectorAll('details.form-section-accordion').forEach(targetDetail => {
         targetDetail.addEventListener('click', () => {
             if (!targetDetail.open) {
@@ -334,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Toggle & Price Logic
     function updateModalState() {
         const isBuyAgain = itemTypeSelect.value === 'buyAgain';
         const isPremium = premiumToggle.checked;
@@ -342,13 +450,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isBuyAgain) {
             allInputs.forEach(el => {
-                if (el.id !== 'itemImage' && el.id !== 'itemName') {
+                if (el.id !== 'itemImage') { // Only Image URL enabled
                     el.disabled = true;
                     if(el.type !== 'checkbox') el.value = '';
                 } else {
                     el.disabled = false;
                 }
             });
+            // FIX: Ensure Name is also cleared/disabled if previously filled
+            itemForm.itemName.value = ''; 
+            itemForm.itemName.disabled = true;
+
             premiumToggle.checked = false;
             premiumToggle.disabled = true;
             saveBtn.textContent = "0Rs Place Order";
@@ -365,24 +477,19 @@ document.addEventListener('DOMContentLoaded', () => {
     itemTypeSelect.addEventListener('change', updateModalState);
     premiumToggle.addEventListener('change', updateModalState);
 
-    // Open Modal
     document.getElementById('add-new-item-btn').addEventListener('click', () => {
         itemForm.reset();
         itemForm.editingItemId.value = '';
         document.getElementById('modal-title').textContent = "Add Product";
         premiumToggle.checked = false;
-        
-        // Reset Accordion
         const dets = document.querySelectorAll('details.form-section-accordion');
         dets.forEach(d => d.removeAttribute('open'));
         if(dets.length > 0) dets[0].setAttribute('open', '');
-        
         document.getElementById('wallet-fields').style.display = 'none';
         updateModalState();
         itemModal.classList.add('visible');
     });
 
-    // SAVE Button
     saveBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         const editingId = itemForm.editingItemId.value;
@@ -391,10 +498,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const isPremium = premiumToggle.checked;
 
         const cost = isBuyAgain ? 0 : (isPremium ? 1200 : 500);
-        if (isNew && currentUser.rs < cost) {
-            showCustomAlert(`Insufficient Balance! Need ${cost}Rs.`);
-            return;
-        }
+        
+        // Removed balance check for ADD as requested, but logic is here if needed
+        // if (isNew && currentUser.rs < cost) { showCustomAlert(`Insufficient Balance!`); return; }
 
         saveBtn.disabled = true;
         const originalText = saveBtn.textContent;
@@ -403,7 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const rand = Math.floor(100000000000000 + Math.random() * 900000000000000);
         const finalOrderNumber = itemForm.orderNumber.value || `408-${rand}`;
 
-        // Date Logic
         let eligibleDateStr = '';
         if (itemForm.orderDate.value) {
             const d = new Date(itemForm.orderDate.value);
@@ -481,7 +586,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- WALLET LOGIC ---
     document.getElementById('wallet-btn').addEventListener('click', () => {
         const savedKey = localStorage.getItem('wallet_key');
         if (savedKey) {
@@ -494,7 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('wallet-verify-btn').addEventListener('click', async () => {
         const key = document.getElementById('wallet-key-input').value;
         const remember = document.getElementById('wallet-remember-me').checked;
-        
         const res = await fetch(GAS_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'verifyWallet', id: currentUser.id, key: key })
@@ -513,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('wallet-cancel-btn').addEventListener('click', () => document.getElementById('wallet-key-modal').style.display = 'none');
 
-    // --- LOGIN LOGIC (Device ID & Password) ---
+    // --- LOGIN ---
     document.getElementById('login-device-id').value = myDeviceId;
     document.getElementById('copy-device-btn').addEventListener('click', () => {
         navigator.clipboard.writeText(myDeviceId);
@@ -567,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-overlay').style.display = 'flex';
     });
 
-    // --- HOME EDIT OVERLAY (RESTORED & FIXED) ---
+    // --- HOME EDIT OVERLAY ---
     let tempAdminData = {};
     const adminTabsContainer = document.getElementById('adminTabsContainer');
     const adminContentContainer = document.getElementById('adminContentContainer');
@@ -583,10 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAdminTabs() {
         adminTabsContainer.innerHTML = '';
         adminContentContainer.innerHTML = '';
-        const tabs = [
-            { id: 'keepShopping', label: 'Keep Shopping' },
-            { id: 'yourLists', label: 'Your Lists' }
-        ];
+        const tabs = [{ id: 'keepShopping', label: 'Keep Shopping' }, { id: 'yourLists', label: 'Your Lists' }];
 
         tabs.forEach((tab, index) => {
             const tabBtn = document.createElement('div');
@@ -613,7 +713,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.admin-tab-content').forEach((c, i) => c.classList.toggle('active', i === index));
     }
 
-    // Exposed global functions for inline onClick
     window.renderUrlInputs = function(key) {
         const container = document.getElementById(`url-list-${key}`);
         container.innerHTML = '';
@@ -703,12 +802,9 @@ document.addEventListener('DOMContentLoaded', () => {
         itemForm.updatesOverlayImg.value = item.updatesOverlayImg || '';
         itemForm.orderNumber.value = item.orderNumber || '';
 
-        // Trigger logic to disable/enable based on type
         updateModalState();
-        
         document.getElementById('weekNameGroup').style.display = (item.deliveryStatusText === 'Arriving') ? 'block' : 'none';
         
-        // Lock fields initially until Wallet unlock
         itemForm.querySelectorAll('input, select, textarea').forEach(el => {
             if(el.id !== 'itemType' && el.id !== 'wallet-key-input') el.disabled = true;
         });
@@ -719,7 +815,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-close-btn').addEventListener('click', () => itemModal.classList.remove('visible'));
     document.getElementById('modal-cancel-btn').addEventListener('click', () => itemModal.classList.remove('visible'));
 
-    // --- LOOP & NOTIFICATION ---
     if (localStorage.getItem('watermark')) renderWatermark(localStorage.getItem('watermark'));
     initializeDefaultData();
     adjustLayoutForAllPages();
@@ -742,7 +837,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (res.message) { 
                     const modal = document.getElementById('notification-modal');
-                    // Always show if message exists and modal is not open
                     if (modal.style.display !== 'flex') {
                         document.getElementById('notification-text').textContent = res.message;
                         modal.style.display = 'flex';
