@@ -1,0 +1,3195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Amazon Mobile</title>
+    <style>
+        /* --- Global & Page Styles --- */
+        :root {
+            --primary-blue: #007bff;
+            --light-grey: #f0f2f2;
+            --medium-grey: #ccc;
+            --text-color: #0F1111;
+            --success-green: #28a745;
+            --danger-red: #dc3545;
+            --dark-grey: #343a40;
+            --light-blue: #e6f3ff;
+            --amazon-green: #3E8277;
+            --amazon-teal: #007185;
+        }
+        
+        * {
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        input, textarea, select {
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Amazon Ember", Arial, sans-serif;
+            background-color: #ffffff;
+            color: #0F1111;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        /* --- TOUCH FEEDBACK --- */
+        button:active, .amz-btn:active, .list-button:active, .admin-button:active, .pill-button:active, .account-button:active, .os-amz-action-btn:active {
+            opacity: 0.6;
+            background-color: #d5d9d9 !important;
+            transition: background-color 0.1s, opacity 0.1s;
+        }
+
+        /* --- WATERMARK STYLES --- */
+        #watermark-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 2147483647; /* Max Z-Index */
+            pointer-events: none; /* Allows clicking through */
+            overflow: hidden; 
+            display: none; 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-auto-rows: 100px;
+            gap: 10px;
+            padding: 10px;
+            mix-blend-mode: multiply; 
+        }
+
+        .watermark-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .watermark-text {
+            font-size: 15px;
+            font-weight: 900;
+            color: #000;
+            text-transform: uppercase;
+            opacity: 0.12; 
+            user-select: none;
+            white-space: nowrap;
+            text-align: center;
+            transform: rotate(-15deg);
+        }
+
+        @keyframes float-1 { 0% { transform: translate(0, 0) rotate(-15deg); } 25% { transform: translate(15px, -10px) rotate(-15deg); } 50% { transform: translate(-5px, 15px) rotate(-15deg); } 75% { transform: translate(-15px, -5px) rotate(-15deg); } 100% { transform: translate(0, 0) rotate(-15deg); } }
+        @keyframes float-2 { 0% { transform: translate(0, 0) rotate(-15deg); } 30% { transform: translate(-15px, 10px) rotate(-15deg); } 60% { transform: translate(10px, -15px) rotate(-15deg); } 100% { transform: translate(0, 0) rotate(-15deg); } }
+        @keyframes float-3 { 0% { transform: translate(0, 0) rotate(-15deg); } 40% { transform: translate(10px, 10px) rotate(-15deg); } 80% { transform: translate(-10px, -10px) rotate(-15deg); } 100% { transform: translate(0, 0) rotate(-15deg); } }
+        @keyframes float-4 { 0% { transform: translate(0, 0) rotate(-15deg); } 50% { transform: translate(0, 20px) rotate(-15deg); } 100% { transform: translate(0, 0) rotate(-15deg); } }
+        @keyframes float-5 { 0% { transform: translate(0, 0) rotate(-15deg); } 50% { transform: translate(20px, 0) rotate(-15deg); } 100% { transform: translate(0, 0) rotate(-15deg); } }
+
+        .move-type-1 { animation: float-1 8s ease-in-out infinite; }
+        .move-type-2 { animation: float-2 10s ease-in-out infinite; }
+        .move-type-3 { animation: float-3 12s ease-in-out infinite; }
+        .move-type-4 { animation: float-4 9s ease-in-out infinite; }
+        .move-type-5 { animation: float-5 11s ease-in-out infinite; }
+
+        /* --- INSTANT PAGE SWITCHING --- */
+        .page {
+            display: none;
+            padding-bottom: 100px;
+        }
+
+        .page.active {
+            display: block;
+        }
+        
+        #home-page {
+             background-color: var(--light-grey);
+        }
+        
+        #home-page .content {
+             padding-bottom: 100px;
+        }
+        
+        /* --- IMAGE PAGE STYLES --- */
+        #image-page .content {
+            display: block;
+            background-color: #fff;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        #image-page img {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: none;
+        }
+
+        /* --- Loader Styles --- */
+        #progress-bar-loader {
+            position: fixed; left: 0; width: 100%; height: 4px;
+            background-color: transparent; z-index: 9998;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.1s ease;
+            overflow: hidden;
+        }
+        #progress-bar-loader.visible {
+            opacity: 1; visibility: visible;
+        }
+        #progress-bar-loader::before {
+            content: ''; display: block; height: 100%; width: 100%;
+            background-image: linear-gradient(to right, #FFA41C, #FFD814, #FFA41C);
+            background-size: 200% auto;
+            animation: progressBarFlow 1s linear infinite;
+        }
+        @keyframes progressBarFlow {
+            0% { background-position: 0% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        /* --- INVOICE LOADER --- */
+        #invoice-loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 11000;
+            display: none;
+            justify-content: center; align-items: center;
+            background-color: transparent; 
+            pointer-events: all; 
+        }
+        
+        .invoice-box {
+            width: 100px;
+            height: 100px;
+            background-color: rgba(0, 0, 0, 0.75); 
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .invoice-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3); 
+            border-top: 3px solid #ffffff; 
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* --- SKELETON LOADING --- */
+        .skeleton {
+            background: #e1e4e8;
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.4) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: shimmer 1.5s infinite;
+            content: '';
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .skeleton-card {
+            flex: 0 0 140px; width: 140px; height: 140px;
+            border-radius: 8px; margin-right: 10px;
+            background-color: #fff;
+            border: 1px solid #eee;
+        }
+        .skeleton-inner {
+            width: 80%; height: 80%;
+            background-color: #f0f0f0;
+            margin: 10% auto;
+            border-radius: 4px;
+        }
+
+        /* Header and Footer */
+        .fixed-header, .fixed-footer {
+            position: fixed; left: 0; right: 0; width: 100%; 
+            z-index: 2002; 
+        }
+        .fixed-header { top: 0; background-color: #ffffff; }
+        .fixed-footer { bottom: 0; cursor: pointer; z-index: 1000; }
+        .fixed-header img, .fixed-footer img, img.full-width-image, .full-width-image img {
+            width: 100%; height: auto; display: block;
+        }
+        .full-width-image.no-gap { margin-top: -1px; }
+        
+        img {
+            -webkit-transform: translate3d(0,0,0);
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
+        }
+
+        #back-tap-area {
+            position: absolute; top: 0; left: 0; width: 25%; height: 100%; z-index: 1001;
+        }
+        
+        /* --- Home Page Modules --- */
+        #home-page .module {
+            background-color: #fff; padding: 15px; margin-bottom: 10px;
+        }
+        #home-page .module-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+        #home-page .module-title { font-weight: bold; font-size: 18px; }
+        
+        .see-all, .edit-button {
+            text-decoration: none; color: var(--amazon-teal); font-size: 14px;
+            background: none; border: none; cursor: pointer; padding: 0;
+        }
+        .edit-button { margin-right: 5px; }
+
+        .quick-access {
+            background-color: #fff; overflow-x: auto; white-space: nowrap;
+            padding: 15px; border-bottom: 1px solid #ddd;
+        }
+        .quick-access-inner { display: inline-block; }
+        .pill-button {
+            background-color: #fff; border: 1px solid var(--medium-grey); border-radius: 50px;
+            padding: 10px 20px; margin-right: 10px; font-size: 14px; cursor: pointer;
+        }
+
+        .card-row { display: flex; overflow-x: auto; padding-bottom: 15px; }
+        .card-row::-webkit-scrollbar { display: none; }
+        .card {
+            flex: 0 0 140px; width: 140px; height: 140px;
+            background-color: #fff; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-right: 10px; display: flex; align-items: center;
+            justify-content: center; padding: 10px; box-sizing: border-box;
+            text-decoration: none; color: inherit;
+        }
+        .card img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .placeholder-text { color: #666; font-size: 14px; padding-left: 5px; }
+
+        #home-page .module-footer { text-align: center; margin-top: 10px; }
+        .see-more-link {
+            color: #555; text-decoration: none; display: inline-flex;
+            align-items: center; font-size: 14px;
+        }
+        .arrow-down { width: 24px; height: 24px; fill: currentColor; }
+        
+        .list-card {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 15px; border: 1px solid #ddd; border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .list-card-text { display: flex; flex-direction: column; }
+        .list-title { font-weight: bold; }
+        .list-subtitle { font-size: 12px; color: #555; }
+        .list-card-previews { display: flex; gap: 5px; }
+        .preview-square {
+            width: 40px; height: 40px; background-color: #f0f0f0;
+            border-radius: 4px; background-size: cover; background-position: center;
+        }
+        .extra-items {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: bold; color: #333;
+        }
+
+        .account-buttons { display: flex; gap: 10px; }
+        .account-button {
+            flex: 1; padding: 15px 10px; font-size: 14px;
+            background-color: #fff; border: 1px solid #ddd;
+            border-radius: 8px; text-align: center; cursor: pointer;
+        }
+
+        .help-module { text-align: center; }
+        .help-title { font-size: 18px; margin-bottom: 15px; }
+        .help-button {
+            width: calc(100% - 20px); padding: 15px; background-color: #fff;
+            border: 1px solid #ddd; border-radius: 8px; font-size: 16px;
+            cursor: pointer; margin: 0 auto;
+        }
+
+        /* --- Orders Page Specific Styles --- */
+        #orders-page .admin-panel-link img {
+            width: 100%; cursor: pointer; height: auto; display: block;
+        }
+        #orders-page .module { padding: 16px; }
+        #orders-page .module-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+        #orders-page .module-header h2 {
+            font-size: 1.2rem; font-weight: bold; margin: 0;
+        }
+        #orders-page .module-header .see-more {
+            font-size: 0.9rem; color: var(--amazon-teal); text-decoration: none; cursor: pointer;
+        }
+
+        /* --- NEW BUY AGAIN STYLES (UPDATED) --- */
+        .buy-again-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            /* Start closer to left (10px padding left) */
+            padding: 0 16px 16px 10px; 
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .buy-again-grid::-webkit-scrollbar {
+            display: none;
+        }
+
+        .buy-again-card {
+            /* Rectangular: Width (160px) > Height (115px) */
+            flex: 0 0 160px; 
+            height: 115px; /* Increased Height */
+            
+            /* Visuals: Light Grey, Borderless */
+            background-color: var(--light-grey); 
+            border: none; 
+            border-radius: 8px; 
+            
+            /* Alignment: Image always centered */
+            display: flex;
+            align-items: center; 
+            justify-content: center; 
+            
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .buy-again-card img {
+            max-width: 90%; 
+            max-height: 90%; 
+            object-fit: contain;
+            mix-blend-mode: multiply; /* Blends image white bg with card grey bg */
+            margin: 0;
+        }
+        
+        .buy-again-card p {
+            display: none; /* Hide text as requested */
+        }
+
+        .separator {
+            height: 8px; background-color: #EAEDED; border: none; margin: 0;
+        }
+
+        .purchase-history-header h2 {
+            font-size: 1.2rem; font-weight: bold; margin: 0 0 4px 0;
+        }
+        .purchase-history-header p {
+            font-size: 0.9rem; color: #565959; margin: 0;
+        }
+
+        .purchase-item-card {
+            display: flex; border: 1px solid #ddd; border-radius: 8px;
+            margin-bottom: 12px; background-color: #fff;
+            overflow: hidden; align-items: stretch; height: 100px;
+        }
+        .purchase-item-card .item-image {
+            flex-basis: 90px; flex-shrink: 0; padding: 8px;
+            display: flex; align-items: center; justify-content: center;
+            border-right: 1px solid #eee; background-color: #F0F2F2;
+        }
+        .purchase-item-card .item-image img {
+            max-width: 100%; max-height: 100%; object-fit: contain;
+        }
+        .purchase-item-card .item-info {
+            flex-grow: 1; padding: 12px 16px;
+            display: flex; flex-direction: column; justify-content: center; overflow: hidden;
+        }
+        .purchase-item-card .item-info .item-name {
+            font-weight: bold; margin: 0 0 4px 0; color: #0F1111;
+            cursor: pointer; text-decoration: none;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .purchase-item-card .item-info .item-status {
+            font-size: 0.9rem; color: #565959; margin: 0;
+        }
+
+        /* --- Standard Order Details Page Styles --- */
+        .product-info-module {
+            display: flex; padding: 16px; gap: 16px; align-items: flex-start;
+        }
+        .product-info-module .product-image {
+            width: 150px; height: 150px; object-fit: contain;
+        }
+        .product-info-module .product-details {
+            display: flex; flex-direction: column; justify-content: center; height: 150px;
+        }
+        .product-info-module .product-name {
+            color: var(--amazon-teal); font-size: 0.9rem; display: block; margin-bottom: 8px; text-decoration: none;
+        }
+        .product-info-module .product-details .product-name:hover { text-decoration: underline; }
+        .product-info-module .product-details .share-item {
+            color: var(--amazon-teal); font-size: 0.9rem; cursor: pointer;
+        }
+
+        .delivery-status-module { padding: 16px; border-top: 1px solid #ddd; }
+        .delivery-status {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }
+        .delivery-status .icon {
+            background-color: var(--amazon-teal); color: white; width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center; border-radius: 4px; font-weight: bold;
+        }
+        .delivery-status .text-bold { font-weight: bold; }
+        .delivery-feedback { margin-bottom: 16px; }
+        .delivery-feedback .feedback-text { font-size: 0.8rem; color: #565959; margin-bottom: 4px; }
+        .delivery-feedback .stars { color: #FFA41C; font-size: 1.5rem; }
+
+        .list-button {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 0; border-bottom: 1px solid #ddd;
+            text-decoration: none; color: inherit;
+        }
+        .list-button .button-text { display: flex; flex-direction: column; }
+        .list-button .button-text .sub-text { font-size: 0.8rem; color: #565959; margin-top: 2px; }
+        .list-button .arrow { color: #888; }
+
+        .module-with-buttons { padding: 0 16px; }
+        .module-with-buttons .list-button:first-of-type { border-top: 1px solid #ddd; }
+        .module-with-buttons h3 {
+            font-size: 1.2rem; font-weight: bold; margin-top: 16px; margin-bottom: 8px;
+        }
+        .details-page-footer { padding: 16px; color: #565959; font-size: 0.9rem; }
+        
+        .details-page-ad-image { 
+            width: calc(100% + 32px) !important; 
+            margin: 0 -16px; 
+            display: block; 
+            height: auto; 
+        }
+
+        /* --- Track Page Styles --- */
+        .track-module { padding: 16px; }
+        .track-module-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+        .track-module-header h2 { font-size: 1rem; font-weight: bold; margin: 0; flex-grow: 1; }
+        .track-module-header .see-all-orders {
+            font-size: 0.9rem; color: var(--amazon-teal); text-decoration: none; white-space: nowrap;
+        }
+        .thin-separator { border: none; border-top: 1px solid #ddd; margin: 0 -16px; }
+        
+        .track-module .full-width-image { margin: 0 -16px; width: calc(100% + 32px); display: block; }
+        
+        .thick-separator { border: none; border-top: 8px solid #EAEDED; margin: 0 -16px 16px -16px; }
+        .shipping-address-section h3 { font-size: 1.2rem; margin: 0 0 8px 0; }
+        .shipping-address-section p { margin: 0; font-size: 1rem; line-height: 1.4; white-space: pre-wrap; }
+        .order-info-section h2 { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; }
+        .thick-separator-light { border: none; border-top: 1px solid #ddd; margin: 0; }
+        .order-details-link {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; text-decoration: none; color: inherit; font-size: 1rem;
+        }
+        .sticky-track-header {
+            position: sticky; background-color: #ffffff; z-index: 999; padding-bottom: 0 !important;
+        }
+        .track-product-image-container { padding: 16px 0; text-align: left; }
+        .track-product-image { max-width: 80px; max-height: 80px; object-fit: contain; }
+        
+        .amz-scroll-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 4px 15px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .amz-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .amz-btn {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 44px;
+            padding: 0 16px;
+            background-color: #fafafa; 
+            border: 1px solid #d5d9d9;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5);
+            color: #0f1111;
+            text-decoration: none;
+            font-size: 13px;
+            line-height: 16px;
+            font-weight: 400;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.1s ease;
+        }
+
+        .shipped-with-info { padding: 0 16px 16px 16px; }
+        .shipped-with-info h3 { font-size: 1.2rem; font-weight: bold; margin: 0 0 8px 0; }
+        .shipped-with-info p, .shipped-with-info a { font-size: 1rem; margin: 0 0 4px 0; color: var(--amazon-teal); text-decoration: none; }
+        
+        /* Updates Overlay Styles */
+        .updates-overlay-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2000; display: none;
+        }
+        .updates-overlay-container.visible { display: block; }
+
+        .updates-backdrop {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); 
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .updates-overlay-container.visible .updates-backdrop { opacity: 1; }
+
+        .updates-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            transform: translateY(100%); transition: transform 0.8s cubic-bezier(0.1, 0.7, 0.1, 1);
+            background-color: transparent;
+            max-height: 90vh;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+        }
+        .updates-overlay-container.visible .updates-sheet { transform: translateY(0); }
+
+        .updates-sheet img {
+            width: 100%; display: block; height: auto;
+            margin-bottom: -1px; 
+        }
+
+        /* --- Order Summary Page --- */
+        #order-summary-page .content { background-color: #ffffff; padding: 0 !important; }
+        
+        .os-sub-nav-bar {
+            background-color: #eaeded;
+            padding: 12px 15px;
+            border-bottom: 1px solid #d5d9d9;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .os-content-container {
+            padding: 15px 15px 40px 15px;
+        }
+
+        .os-section-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            margin-top: 20px;
+        }
+        .os-section-title.first { margin-top: 0; }
+
+        .os-amz-card {
+            border: 1px solid #d5d9d9;
+            border-radius: 8px;
+            background-color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .os-od-padding { padding: 14px 15px; }
+        
+        .os-od-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            line-height: 20px;
+            margin-bottom: 2px;
+        }
+        
+        .os-label-grey { color: #565959; }
+        .os-val-black { color: #0f1111; }
+
+        .os-invoice-row {
+            border-top: 1px solid #d5d9d9;
+            padding: 14px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            border-radius: 0 0 8px 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .os-chevron {
+            width: 8px; height: 8px;
+            border-right: 2px solid #111;
+            border-top: 2px solid #111;
+            transform: rotate(45deg);
+        }
+
+        .os-arriving-text {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .os-product-flex {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .os-img-box {
+            position: relative;
+            width: 70px;
+            flex-shrink: 0;
+        }
+        .os-img-box img { width: 100%; height: auto; object-fit: contain; }
+        
+        .os-qty-circle { display: none !important; }
+        
+        .os-prod-info { font-size: 14px; line-height: 1.35; }
+        .os-prod-name { font-weight: 700; margin-bottom: 4px; display: block; text-decoration: none; color: inherit; }
+        .os-sold-line { font-size: 12px; color: #565959; margin-bottom: 4px;}
+        .os-blue-link { color: var(--amazon-teal); text-decoration: none; }
+        .os-price-text { font-weight: 700; font-size: 14px; }
+
+        .os-button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .os-amz-action-btn {
+            flex: 1 0 auto;
+            background: #ffffff;
+            border: 1px solid #d5d9d9;
+            border-radius: 100px;
+            height: 38px;
+            padding: 0 16px;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center;
+            font-size: 13px; color: #0f1111;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,0.5);
+            white-space: nowrap;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .os-info-box {
+            padding: 15px;
+            font-size: 14px;
+            line-height: 20px;
+        }
+        .os-summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .os-grand-total {
+            font-weight: 700;
+            font-size: 15px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .os-full-width-image {
+            width: calc(100% + 30px); 
+            margin: 20px -15px 0 -15px;
+            display: block;
+            height: auto;
+        }
+
+        /* --- Admin Panel --- */
+        #admin-page .content { padding: 0; background-color: #f8f9fa; }
+        .admin-header-main {
+            background-color: #fff; padding: 15px 20px; border-bottom: 1px solid #dee2e6;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .admin-header-main h1 { margin: 0; font-size: 1.5rem; }
+        .admin-header-main a { color: var(--primary-blue); text-decoration: none; }
+        .admin-header-actions { display: flex; align-items: center; gap: 15px; }
+        
+        /* Notification Icon */
+        .notification-icon-container { position: relative; cursor: pointer; }
+        .notification-icon { font-size: 1.5rem; color: #333; }
+        .notification-dot {
+            position: absolute; top: -2px; right: -2px; width: 10px; height: 10px;
+            background-color: var(--danger-red); border-radius: 50%; display: none;
+        }
+        
+        .admin-section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd;
+        }
+        .admin-section-header h2 { margin: 0; font-size: 1.25rem; }
+        .admin-button {
+             background-color: var(--primary-blue); color: white; padding: 10px 15px;
+             border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+             text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+             justify-content: center;
+        }
+        .admin-button.secondary { background-color: var(--success-green); }
+        .admin-button:hover { opacity: 0.9; }
+
+        .item-list-admin { list-style: none; padding: 0; display: grid; gap: 15px; }
+        .item-list-admin-card {
+            background-color: #fff; border: 1px solid #ddd; border-radius: 8px;
+            padding: 15px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative;
+        }
+        /* Drag and Drop Styles */
+        .item-list-admin-card.dragging { opacity: 0.5; background-color: var(--light-blue); }
+        .item-list-admin-card.drag-over-top::before, .item-list-admin-card.drag-over-bottom::after {
+            content: ''; position: absolute; left: 0; right: 0; height: 4px;
+            background-color: var(--primary-blue);
+        }
+        .item-list-admin-card.drag-over-top::before { top: -2px; }
+        .item-list-admin-card.drag-over-bottom::after { bottom: -2px; }
+        
+        .item-list-admin-card .item-preview {
+            width: 50px; height: 50px; flex-shrink: 0; background-color: #eee; border-radius: 4px;
+            background-size: contain; background-position: center; background-repeat: no-repeat; cursor: grab;
+        }
+        .item-list-admin-card:active { cursor: grabbing; }
+        
+        .item-list-admin-card .item-info-admin { flex-grow: 1; }
+        .item-list-admin-card .item-info-admin p { margin: 0; font-weight: 600; }
+        .item-list-admin-card .item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .item-list-admin-card .item-actions button {
+            padding: 8px 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 0.8rem; color: #fff;
+        }
+        .admin-edit-btn { background-color: var(--primary-blue); }
+        .admin-delete-btn { background-color: var(--danger-red); }
+        .admin-duplicate-btn { background-color: var(--success-green); }
+        
+        /* New Admin Control Panel Styles */
+        .admin-controls { padding: 20px; background-color: white; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+        .admin-user-info { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; }
+        .admin-main-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 15px; }
+        
+        .glow-button {
+            background-color: red;
+            box-shadow: 0 0 10px red;
+            animation: glowing 1.5s infinite;
+        }
+        @keyframes glowing {
+            0% { box-shadow: 0 0 5px red; }
+            50% { box-shadow: 0 0 20px red; }
+            100% { box-shadow: 0 0 5px red; }
+        }
+        
+        .loading-spinner {
+            border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%;
+            width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Alert & Confirm Modal Styles */
+        .custom-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 20000 !important; /* FIXED Z-INDEX */
+            display: none;
+            justify-content: center; align-items: center;
+        }
+        .custom-box {
+            background: #fff; width: 85%; max-width: 350px; padding: 20px;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center; font-family: "Amazon Ember", Arial, sans-serif;
+        }
+        .custom-box p { margin: 0 0 20px 0; font-size: 16px; color: #333; }
+        .custom-box h3 { margin-top: 0; }
+        .custom-box input { margin-bottom: 15px; width: 100%; }
+        
+        .custom-box button {
+            padding: 10px 20px; border: none; border-radius: 5px;
+            font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        #custom-msg-close { background: var(--primary-blue); color: white; width: 100%; }
+        
+        /* API Modal below Alert */
+        #api-run-modal { z-index: 5000; }
+        
+        #wallet-key-modal { z-index: 10001; }
+
+        /* Admin Modal Styles */
+        .admin-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2000;
+            display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .admin-modal-overlay.visible { display: flex; opacity: 1; }
+        .admin-modal {
+            background: #f8f9fa; width: 95%; max-width: 600px; border-radius: 12px;
+            max-height: 90vh; display: flex; flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s ease;
+        }
+        .admin-modal-overlay.visible .admin-modal { transform: scale(1); }
+        .modal-header {
+            padding: 15px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h2 { margin: 0; font-size: 1.2rem; }
+        .modal-close-btn { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #888; }
+        .modal-body { overflow-y: auto; padding: 20px; }
+        .modal-footer {
+            padding: 15px 20px; border-top: 1px solid #eee; background: #fff; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; align-items: center;
+        }
+        .form-section-accordion { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; background: #fff; }
+        .form-section-accordion summary {
+            padding: 15px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+        }
+        .form-section-accordion summary::-webkit-details-marker { display: none; }
+        .form-section-accordion summary:after { content: '▼'; font-size: 0.8em; }
+        .form-section-accordion[open] summary:after { content: '▲'; }
+        .form-section-accordion-content { padding: 0 15px 15px 15px; }
+        
+        .form-input-group { margin-bottom: 15px; }
+        .form-input-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+        .form-input-group input, .form-input-group select, .form-input-group textarea {
+            width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; font-family: inherit; font-size: 1rem;
+        }
+        .form-input-group input:disabled, .form-input-group textarea:disabled {
+            background-color: #e9ecef; cursor: not-allowed; color: #6c757d;
+        }
+        
+        /* WALLET ICON STYLE FIX */
+        .wallet-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-right: 15px;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+        }
+        #wallet-btn {
+            font-size: 1.5rem; 
+        }
+        
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 3000; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .login-card {
+            width: 80%; max-width: 300px; padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; text-align: center;
+        }
+        .login-card input[type="text"], .login-card input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .login-card button {
+             width: 100%; padding: 10px; background: var(--primary-blue); color: #fff;
+             border: none; border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        
+        /* --- Old Admin Panel Overlay Styles (For Home Page) --- */
+        .admin-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); z-index: 100;
+            display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .admin-overlay.visible { display: flex; opacity: 1; }
+        .admin-overlay .admin-container {
+            width: 90%; max-width: 700px; background-color: #fff;
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; overflow: hidden; height: 90vh; max-height: 800px; padding: 0;
+        }
+        .admin-overlay .admin-header { padding: 20px; border-bottom: 1px solid #eee; }
+        .admin-overlay .admin-header h1 { margin: 0 0 5px 0; font-size: 22px; text-align: left;}
+        .admin-overlay .admin-header p { margin: 0; color: #666; }
+        .admin-overlay .admin-tabs { display: flex; border-bottom: 1px solid #eee; }
+        .admin-overlay .admin-tab {
+            flex: 1; padding: 15px 10px; text-align: center; cursor: pointer;
+            background-color: #f8f9fa; color: #6c757d; border-bottom: 3px solid transparent;
+            transition: background-color 0.2s, border-color 0.2s; white-space: nowrap;
+        }
+        .admin-overlay .admin-tab.active { background-color: #fff; border-bottom-color: var(--primary-blue); color: #000; }
+        .admin-overlay .admin-content { flex-grow: 1; overflow-y: auto; padding: 20px; }
+        .admin-overlay .admin-tab-content { display: none; }
+        .admin-overlay .admin-tab-content.active { display: block; }
+        .admin-note { color: #555; font-size: 14px; margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
+        .url-input-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .url-preview {
+            width: 50px; height: 50px; flex-shrink: 0; background-color: #eee;
+            border-radius: 6px; background-size: cover; background-position: center;
+        }
+        .url-input {
+            flex-grow: 1; padding: 12px; border: 1px solid var(--medium-grey); border-radius: 4px; font-size: 14px;
+        }
+        .remove-url-btn {
+            background: #e6e6e6; border: none; color: #555; font-weight: bold; width: 30px; height: 30px;
+            border-radius: 50%; cursor: pointer; flex-shrink: 0;
+        }
+        .remove-url-btn:hover { background-color: var(--danger-red); color: white; }
+        .add-url-btn {
+            display: block; width: 100%; padding: 12px; background-color: #f8f9fa;
+            border: 1px dashed var(--medium-grey); border-radius: 4px; cursor: pointer; margin-top: 15px;
+        }
+        .admin-footer {
+            padding: 15px 20px; border-top: 1px solid #eee; background-color: #fff; display: flex; gap: 10px;
+        }
+        .admin-button-overlay {
+            flex: 1; padding: 12px; border: none; border-radius: 6px;
+            font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none;
+        }
+        .admin-button-overlay.primary { background-color: var(--primary-blue); color: white; }
+        .admin-button-overlay.secondary { background-color: #6c757d; color: white; }
+        .save-feedback {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background-color: var(--success-green); color: white; padding: 10px 20px;
+            border-radius: 6px; opacity: 0; transition: all 0.4s ease; z-index: 101;
+        }
+
+        /* --- INVOICE PAGE STYLES --- */
+        .invoice-card {
+            width: 900px;
+            min-width: 900px;
+            background-color: #ffffff;
+            margin: 20px auto;
+            border: 1px solid #d5d9d9;
+            padding: 18px 20px;
+            box-sizing: border-box;
+            font-family: "Arial", sans-serif;
+            color: #333333;
+        }
+        .invoice-card h2, .invoice-card p, .invoice-card h5 {
+            margin-top: 0; margin-bottom: 0;
+        }
+        .invoice-header { margin-bottom: 10px; }
+        .invoice-header h2 { text-align: left; margin-bottom: 10px; }
+        .invoice-meta-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
+        .invoice-divider { border: 0; border-top: 1px solid #e7e7e7; margin: 10px 0; }
+        .invoice-grid { display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 20px; font-size: 13px; margin-bottom: 20px; }
+        .invoice-col-label { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
+        .invoice-summary-table { width: 100%; border-collapse: collapse; }
+        .invoice-summary-table td { padding: 2px 0; }
+        .invoice-summary-table .price-col { text-align: right; }
+        .invoice-product-section { border-top: 1px solid #e7e7e7; padding-top: 10px; }
+        .invoice-arrival-text { color: #007600; font-weight: bold; font-size: 17px; margin-bottom: 10px; display: block; }
+        .invoice-product-row { display: flex; align-items: flex-start; }
+        .invoice-img-container { position: relative; margin-right: 15px; }
+        .invoice-img-container img { width: 80px; height: 80px; object-fit: contain; }
+        .invoice-badge { display: none !important; }
+        .invoice-product-details { display: flex; flex-direction: column; }
+        .invoice-product-link { color: var(--amazon-teal); text-decoration: none; font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+        .invoice-product-link:hover { text-decoration: underline; }
+        .invoice-seller-text { color: #565959; font-size: 11px; margin-bottom: 2px; }
+        .invoice-price-text { color: #B12704; font-weight: bold; font-size: 13px; }
+        
+        /* --- TOGGLE SWITCH STYLES --- */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { display:none; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-blue); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        
+        /* Get Link Button */
+        .get-link-btn {
+            display: block; width: 100%; text-align: center;
+            background-color: var(--danger-red); color: white;
+            padding: 8px; margin-top: 5px; border-radius: 4px;
+            text-decoration: none; font-size: 0.9rem;
+        }
+        
+        /* Full Screen Countdown Overlay */
+        #countdown-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95); z-index: 20005;
+            display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+        #countdown-text { font-size: 2rem; font-weight: bold; color: var(--primary-blue); }
+        #countdown-num { font-size: 4rem; font-weight: bold; color: #333; margin-top: 10px; }
+
+    </style>
+</head>
+<body>
+
+<div id="progress-bar-loader"></div>
+
+<!-- Watermark Overlay (GRID PROTECTED) -->
+<div id="watermark-overlay"></div>
+
+<!-- Countdown Overlay -->
+<div id="countdown-overlay">
+    <div id="countdown-text">Placing Order...</div>
+    <div id="countdown-num"></div>
+</div>
+
+<!-- Invoice Loader Overlay -->
+<div id="invoice-loader-overlay">
+    <div class="invoice-box">
+        <div class="invoice-spinner"></div>
+    </div>
+</div>
+
+<!-- Custom In-App Alert Box -->
+<div id="custom-msg-overlay" class="custom-overlay">
+    <div class="custom-box">
+        <p id="custom-msg-text"></p>
+        <button id="custom-msg-close">OK</button>
+    </div>
+</div>
+
+<!-- Custom Confirmation Box -->
+<div id="custom-confirm-overlay" class="custom-overlay">
+    <div class="custom-box">
+        <p>Are you sure you want to delete this item?</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="confirm-yes" class="admin-button" style="background:var(--danger-red);">Yes</button>
+            <button id="confirm-no" class="admin-button secondary">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- API Run Modal -->
+<div id="api-run-modal" class="custom-overlay">
+    <div class="custom-box">
+        <h3>Verify Order</h3>
+        <input type="text" id="api-order-input" placeholder="Enter existing Order #">
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="api-pay-btn" class="admin-button secondary">Pay 500Rs</button>
+            <button id="api-close-btn" class="admin-button" style="background:#6c757d;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notification-modal" class="custom-overlay">
+    <div class="custom-box">
+        <h3>Notification</h3>
+        <p id="notification-text" style="white-space: pre-wrap; text-align:left;"></p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="notif-read-btn" class="admin-button secondary">Read</button>
+            <button id="notif-reply-btn" class="admin-button">Send Message</button>
+            <button id="notif-close-btn" class="admin-button" style="background:#6c757d;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Key Modal (Replaces Prompt) -->
+<div id="wallet-key-modal" class="custom-overlay">
+    <div class="custom-box">
+        <h3>Security Verification</h3>
+        <input type="password" id="wallet-key-input" placeholder="Enter Security Key">
+        <div style="text-align:left; margin: 10px 0; font-size: 14px;">
+            <input type="checkbox" id="wallet-remember-me" style="width: auto; margin-right: 5px;"> 
+            <label for="wallet-remember-me">Remember Me</label>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="wallet-verify-btn" class="admin-button secondary">Verify</button>
+            <button id="wallet-cancel-btn" class="admin-button" style="background:#6c757d;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Login Overlay -->
+<div id="login-overlay">
+    <div class="login-card">
+        <h3>Admin Login</h3>
+        <input type="text" id="login-id" placeholder="Enter ID">
+        <input type="password" id="login-pass" placeholder="Enter Password">
+        
+        <div style="text-align:left; margin: 10px 0; font-size: 14px;">
+            <input type="checkbox" id="remember-me" style="width: auto; margin-right: 5px;"> 
+            <label for="remember-me">Remember Me</label>
+        </div>
+
+        <button id="login-btn">Log In</button>
+        
+        <!-- Red Glowing Tutorial Button -->
+        <a href="tutorial.html" class="admin-button glow-button" style="background-color:red; color:white; width:100%; text-align:center; margin-top:15px; display:block; text-decoration:none;">Tutorial</a>
+        
+        <p id="login-msg" style="color:red; font-size:12px; margin-top:10px;"></p>
+    </div>
+</div>
+
+<!-- Fixed Header - Visible on all pages -->
+<header class="fixed-header">
+    <div id="back-tap-area"></div>
+    <a href="#home">
+        <img src="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251129_112415_Amazon.jpg?updatedAt=1764395709738" alt="Header Image" id="header-img">
+    </a>
+</header>
+
+<!-- PAGE 0: Home Page -->
+<div id="home-page" class="page">
+    <main class="content">
+        <div class="full-width-image no-gap">
+            <img src="https://ik.imagekit.io/goldencodes/Picsart_25-11-09_00-40-33-042.jpg?updatedAt=1762629100597" alt="Sub Header">
+        </div>
+
+        <div class="quick-access">
+            <div class="quick-access-inner">
+                <a href="#orders" class="pill-button" style="text-decoration:none; color: var(--text-color);">Orders</a>
+                <button class="pill-button">Buy Again</button>
+                <button class="pill-button">Account</button>
+                <button class="pill-button">Lists</button>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Your Orders</span>
+                <a href="#orders" class="see-all">See all</a>
+            </div>
+            <div class="card-row" id="yourOrders-cards"></div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Buy Again</span>
+                <a href="#" class="see-all">See all</a>
+            </div>
+            <div class="card-row" id="buyAgain-cards"></div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Keep shopping for</span>
+                <div>
+                    <button class="edit-button" id="openAdminButton">Edit</button> |
+                    <a href="#" class="see-all" style="margin-left: 5px;">Browsing history</a>
+                </div>
+            </div>
+            <div class="card-row" id="keepShopping-cards"></div>
+            <div class="module-footer">
+                <a href="#" class="see-more-link">
+                    <svg class="arrow-down" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"></path></svg>
+                    See more
+                </a>
+            </div>
+        </div>
+        
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Your Lists</span>
+                <a href="#" class="see-all">See all</a>
+            </div>
+            <div class="list-card">
+                <div class="list-card-text">
+                    <span class="list-title">Shopping List</span>
+                    <span class="list-subtitle">Private • Default</span>
+                </div>
+                <div class="list-card-previews">
+                    <div class="preview-square" id="list-preview-1"></div>
+                    <div class="preview-square" id="list-preview-2"></div>
+                    <div class="preview-square extra-items" id="list-extra-items">+0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Your Account</span>
+                <a href="#" class="see-all">See all</a>
+            </div>
+            <div class="account-buttons">
+                <button class="account-button">Your Orders</button>
+                <button class="account-button">Your Addresses</button>
+                <button class="account-button">Amazon Pay UPI</button>
+            </div>
+        </div>
+
+        <div class="full-width-image">
+            <img src="https://ik.imagekit.io/goldencodes/Picsart_25-11-09_02-08-25-361.jpg?updatedAt=1762634330892" alt="Decorative Image">
+        </div>
+
+        <div class="module help-module">
+            <h3 class="help-title">Need more help?</h3>
+            <button class="help-button">Visit customer service</button>
+        </div>
+    </main>
+</div>
+
+<!-- PAGE 1: "Your Orders" Page -->
+<div id="orders-page" class="page">
+    <div class="content">
+        <!-- HEADER CHANGES APPLIED HERE -->
+        <div style="padding: 10px 15px 5px 15px;">
+            <h1 style="font-size: 1.5rem; font-weight: bold; margin: 0;">Your Orders</h1>
+        </div>
+
+        <a href="#admin" class="admin-panel-link">
+            <img src="https://ik.imagekit.io/goldencodes/Picsart_25-11-09_03-04-23-916.jpg?updatedAt=1762637690349" alt="Admin Panel">
+        </a>
+
+        <div class="module">
+            <div class="module-header">
+                <h2>Buy again</h2>
+                <a class="see-more">See more</a>
+            </div>
+            <!-- Horizontal scroll container -->
+            <div class="buy-again-grid" id="buy-again-container"></div>
+        </div>
+
+        <hr class="separator">
+
+        <div class="module">
+            <div class="purchase-history-header">
+                <h2>Purchase history</h2>
+                <p>Past three months</p>
+            </div>
+            <div id="purchase-history-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 2: Order Details Page -->
+<div id="details-page" class="page">
+    <div class="content" id="order-details-content"></div>
+</div>
+
+<!-- PAGE 3: Main Admin Panel (REDESIGNED) -->
+<div id="admin-page" class="page">
+    <div class="content">
+        <header class="admin-header-main">
+            <h1>Admin Panel</h1>
+            <div class="admin-header-actions">
+                <div class="notification-icon-container" id="notif-icon">
+                    <span class="notification-icon">🔔</span>
+                    <div class="notification-dot" id="notif-dot"></div>
+                </div>
+                <a href="#orders">← Back</a>
+            </div>
+        </header>
+
+        <!-- New Control Dashboard -->
+        <div class="admin-controls">
+            <div class="admin-user-info">
+                <span id="admin-user-id">ID: --</span>
+                <span id="admin-user-rs">0 Rs</span>
+            </div>
+            <div class="admin-main-actions">
+                <button id="add-new-item-btn" class="admin-button">Add Product</button>
+                <button id="refresh-data-btn" class="admin-button secondary">Refresh</button>
+                <button id="admin-logout-btn" class="admin-button" style="background-color: var(--danger-red);">Log Out</button>
+            </div>
+        </div>
+
+        <!-- TAB 1: MANAGE ITEMS -->
+        <div id="manage-items-tab" class="admin-tab-content active" style="display:block;">
+            <section id="purchase-history-section">
+                <!-- EMERGENCY CHAT BUTTON -->
+                <div style="margin-bottom: 20px;">
+                    <a href="chat.html" class="admin-button" style="background-color:red; display:block; text-align:center; margin-bottom:10px; text-decoration:none;">Emergency Chat</a>
+                </div>
+                
+                <div class="admin-section-header">
+                    <h2>Orders List</h2>
+                </div>
+                <ul id="purchase-history-admin-list" class="item-list-admin" data-type="purchaseHistory"></ul>
+            </section>
+        </div>
+    </div>
+</div>
+
+
+<!-- PAGE 4: Full Image View Page -->
+<div id="image-page" class="page">
+    <div class="content" id="image-page-content"></div>
+</div>
+
+<!-- PAGE 5: Track Package Page -->
+<div id="track-page" class="page">
+    <div class="content" id="track-page-content"></div>
+</div>
+
+<!-- PAGE 7: Order Summary Page -->
+<div id="order-summary-page" class="page">
+    <div class="content" id="order-summary-content"></div>
+</div>
+
+<!-- PAGE 8: Invoice Page (NEW) -->
+<div id="invoice-page" class="page" style="overflow-x: auto; background-color: #eaeded;">
+    <div class="content" id="invoice-page-content" style="padding: 0; min-height: 100vh;"></div>
+</div>
+
+<!-- Tracking Updates Overlay -->
+<div id="updates-overlay" class="updates-overlay-container">
+    <div class="updates-backdrop"></div>
+    <div class="updates-sheet">
+        <img id="updates-overlay-img" src="" alt="Tracking Updates">
+    </div>
+</div>
+
+<!-- Admin Panel Overlay for Home Page (For Editing Lists) -->
+<div class="admin-overlay" id="adminPanel">
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Manage Page Images</h1>
+            <p>Add or remove image URLs. Previews update automatically.</p>
+        </div>
+        <div class="admin-tabs" id="adminTabsContainer"></div>
+        <div class="admin-content" id="adminContentContainer"></div>
+        <div class="admin-footer">
+            <button id="closeAdminButton" class="admin-button-overlay secondary">Close</button>
+            <button id="saveButton" class="admin-button-overlay primary">Save & Close</button>
+        </div>
+    </div>
+</div>
+<div class="save-feedback" id="saveFeedback">Saved Successfully!</div>
+
+<!-- REDESIGNED Admin Modal for Add/Edit Item -->
+<div class="admin-modal-overlay" id="item-modal">
+    <div class="admin-modal">
+        <header class="modal-header">
+            <div style="display:flex; align-items:center;">
+                <h2 id="modal-title">Add Product</h2>
+            </div>
+            <div style="display:flex; align-items:center;">
+                 <!-- NEW WALLET FIX: WRAPPER -->
+                 <div class="wallet-wrapper">
+                     <span id="wallet-btn" title="Secure Wallet">🧟‍♂️</span>
+                 </div>
+                 <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            </div>
+        </header>
+        <form class="modal-body" id="item-form">
+            <input type="hidden" id="editingItemId" name="editingItemId">
+            
+            <details class="form-section-accordion" open id="accordion-basic">
+                <summary>Basic Info</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group">
+                        <label for="itemType">Item Type</label>
+                        <select id="itemType" name="itemType"><option value="purchaseHistory">Purchase History</option><option value="buyAgain">BuyAgain</option></select>
+                    </div>
+                    <div class="form-input-group" id="itemNameGroup">
+                        <label for="itemName">Product Name</label>
+                        <input type="text" id="itemName" name="itemName">
+                    </div>
+                    <div class="form-input-group">
+                        <label for="itemImage">Image URL</label>
+                        <input type="url" id="itemImage" name="itemImage" required>
+                        <a href="gallery.html" class="get-link-btn">Get image link</a>
+                    </div>
+                </div>
+            </details>
+
+            <details class="form-section-accordion" id="accordion-delivery">
+                <summary>Delivery & Dates</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group">
+                        <label for="deliveryStatus">Delivery Status Text</label>
+                        <select id="deliveryStatus" name="deliveryStatus">
+                            <option>Delivered on</option>
+                            <option>Delivered Today</option>
+                            <option>Arriving tomorrow</option>
+                            <option>Arriving today</option>
+                            <option>Arriving</option>
+                        </select>
+                    </div>
+                    <div class="form-input-group"><label for="orderDate">Order Date</label><input type="date" id="orderDate" name="orderDate"></div>
+                    <div class="form-input-group"><label for="deliveryDate">Delivery Date</label><input type="date" id="deliveryDate" name="deliveryDate"></div>
+                    <div class="form-input-group" id="weekNameGroup" style="display:none;">
+                        <label for="weekName">Week Name (Visible only if Status is 'Arriving')</label>
+                        <select id="weekName" name="weekName">
+                            <option value="">-- Select Day --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+
+            <details class="form-section-accordion" id="accordion-tracking">
+                <summary>Tracking Details</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group"><label for="shippingAddress">Shipping Address</label><textarea id="shippingAddress" name="shippingAddress" rows="3"></textarea></div>
+                    <div class="form-input-group"><label for="trackingId">Tracking ID</label><input type="text" id="trackingId" name="trackingId"></div>
+                    <div class="form-input-group">
+                        <label for="progressStepImageUrl">Progress/Map Image Step</label>
+                        <select id="progressStepImageUrl" name="progressStepImageUrl">
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251203_200923_Amazon.jpg?updatedAt=1764772917354">Just Ordered</option>
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251204_090440_Amazon.jpg?updatedAt=1764819298084">Shipped</option>
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251121_111917_Amazon.jpg?updatedAt=1763704241266">Out of Delivery</option>
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251202_190436_Chrome.jpg?updatedAt=1764682507702">Delivered</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+            
+            <details class="form-section-accordion" id="accordion-summary">
+                <summary>Order Summary Info</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group"><label for="sellerInfo">Seller Info</label><input type="text" id="sellerInfo" name="sellerInfo"></div>
+                    <div class="form-input-group"><label for="price">Price (e.g. 1799.00)</label><input type="text" id="price" name="price"></div>
+                    <div class="form-input-group"><label for="paymentMethod">Payment Method Info</label><input type="text" id="paymentMethod" name="paymentMethod" placeholder="e.g. American Express xx-xxxx-1234 Credit Card"></div>
+                    <div class="form-input-group"><label for="orderNumber">Order Number (Unique)</label><input type="text" id="orderNumber" name="orderNumber" disabled></div>
+                </div>
+            </details>
+
+            <!-- Wallet Hidden Section -->
+            <div id="wallet-fields" style="display:none; border: 2px solid var(--primary-blue); padding: 10px; border-radius: 8px; margin-top: 15px; background: #e6f3ff;">
+                <h4>Wallet Secured Fields</h4>
+                <div class="form-input-group">
+                    <label for="itemImagePageUrl">Image Page URL</label>
+                    <input type="url" id="itemImagePageUrl" name="itemImagePageUrl">
+                </div>
+                <div class="form-input-group"><label for="shareTrackingLink">Share Tracking Link</label><input type="url" id="shareTrackingLink" name="shareTrackingLink"></div>
+                
+                <div class="form-input-group">
+                    <label for="shareLink">General Share Link</label>
+                    <input type="url" id="shareLink" name="shareLink">
+                </div>
+                <div class="form-input-group">
+                    <label for="updatesOverlayImg">Tracking Updates Overlay Image URL</label>
+                    <input type="url" id="updatesOverlayImg" name="updatesOverlayImg">
+                </div>
+            </div>
+
+        </form>
+        <footer class="modal-footer">
+            <!-- Premium Toggle -->
+            <div id="premium-toggle-container" style="display:flex; align-items:center; width:100%; justify-content:center; margin-bottom:10px;">
+                <label class="switch">
+                    <input type="checkbox" id="premium-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span style="margin-left:10px; font-weight:bold; font-size:0.9rem;">Premium Order (1200Rs)</span>
+            </div>
+            
+            <button class="admin-button" style="background-color: #6c757d;" id="modal-cancel-btn">Cancel</button>
+            <button class="admin-button secondary" id="modal-save-btn">500Rs Place Order</button>
+        </footer>
+    </div>
+</div>
+
+
+<!-- Fixed Footer - Visible on all pages -->
+<footer class="fixed-footer">
+    <img src="https://ik.imagekit.io/5lz94dan6e/Picsart_25-11-28_09-08-31-792.jpg?updatedAt=1764301143323" alt="Footer Image" id="footer-img">
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxI8uxZZMJXaQ90_An_DXAKF6gqzxgE1yA3t5KH6x72cLqQywm4vr7g6pdOQ8cWXkxz/exec";
+    
+    // User Session State
+    let currentUser = { id: null, rs: 0, orderId: null };
+    let cachedWalletKey = null;
+
+    // Delete handling vars
+    let itemToDeleteId = null;
+    let itemToDeleteType = null;
+    
+    // 1st Time Load Flag (Session)
+    let isFirstLoad = !sessionStorage.getItem('appLoaded');
+    
+    // --- SCROLL BEHAVIOR ---
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+    let isBackNavigation = false;
+    const pageScrollPositions = {};
+    window.addEventListener('popstate', () => { isBackNavigation = true; });
+
+    const DB = {
+        get: (key) => JSON.parse(localStorage.getItem(key)) || [],
+        set: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+        getValue: (key) => localStorage.getItem(key) || '',
+        setValue: (key, value) => localStorage.setItem(key, value),
+    };
+
+    const HEADER_URLS = {
+        home: 'https://ik.imagekit.io/goldencodes/Picsart_25-11-07_04-28-27-724.jpg?updatedAt=1762470033938',
+        other: 'https://ik.imagekit.io/5lz94dan6e/Screenshot_20251129_112415_Amazon.jpg?updatedAt=1764395709738'
+    };
+
+    const FIXED_URLS = {
+        trackBottom: 'https://ik.imagekit.io/5lz94dan6e/Screenshot_20251206_045647_Chrome.jpg?updatedAt=1764977252311',
+        summaryBottom: 'https://ik.imagekit.io/5lz94dan6e/Screenshot_20251206_045155_Chrome.jpg?updatedAt=1764976979530',
+        detailAd: 'https://ik.imagekit.io/5lz94dan6e/Screenshot_20251206_050644_Chrome.jpg'
+    };
+
+    // Images for logic
+    const IMG_ORDERED = "https://ik.imagekit.io/5lz94dan6e/Screenshot_20251203_200923_Amazon.jpg?updatedAt=1764772917354";
+
+    function initializeDefaultData() {
+        if (!localStorage.getItem('initialized')) {
+            DB.set('buyAgainItems', []);
+            DB.set('purchaseHistoryItems', []);
+            DB.set('keepShopping', []); 
+            DB.set('yourLists', []);
+            localStorage.setItem('initialized', 'true');
+        }
+    }
+    
+    // --- WATERMARK SYSTEM ---
+    function renderWatermark(text) {
+        const overlay = document.getElementById('watermark-overlay');
+        
+        if (!text || text.trim() === "") {
+            overlay.style.display = 'none';
+            overlay.innerHTML = '';
+            return;
+        }
+
+        const currentText = overlay.getAttribute('data-text');
+        if (currentText === text) return;
+        overlay.setAttribute('data-text', text);
+
+        overlay.innerHTML = '';
+        overlay.style.display = 'grid'; 
+        
+        const totalCells = Math.ceil(window.innerHeight / 100) * Math.ceil(window.innerWidth / 140);
+        
+        for (let i = 0; i < totalCells + 10; i++) { 
+            const cell = document.createElement('div');
+            cell.className = 'watermark-cell';
+            
+            const txt = document.createElement('div');
+            txt.className = 'watermark-text';
+            txt.textContent = text;
+            
+            const moveType = Math.floor(Math.random() * 5) + 1;
+            txt.classList.add(`move-type-${moveType}`);
+            txt.style.animationDelay = `-${Math.random() * 10}s`;
+
+            cell.appendChild(txt);
+            overlay.appendChild(cell);
+        }
+    }
+
+    const pages = document.querySelectorAll('.page');
+    
+    function preloadSubPages() {
+        const orderItems = DB.get('purchaseHistoryItems');
+        if(!orderItems || orderItems.length === 0) return;
+        const latestItem = orderItems[0]; 
+        const hiddenContainer = document.createElement('div');
+        hiddenContainer.style.position = 'absolute';
+        hiddenContainer.style.top = '-9999px';
+        hiddenContainer.style.width = '100px';
+        hiddenContainer.style.height = '100px';
+        hiddenContainer.style.overflow = 'hidden';
+        document.body.appendChild(hiddenContainer);
+        
+        const img = new Image();
+        img.src = latestItem.progressStepImageUrl;
+        hiddenContainer.appendChild(img);
+        
+        setTimeout(() => { document.body.removeChild(hiddenContainer); }, 2000);
+    }
+    
+    window.triggerInvoiceLoader = function(id) {
+        const overlay = document.getElementById('invoice-loader-overlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            window.location.hash = `#invoice-${id}`;
+        }, 4000);
+    }
+
+    // --- PAGE SWITCHING ---
+    function showPage(pageId, params = null) {
+        if(pageId === 'admin-page' && !currentUser.id) {
+            document.getElementById('login-overlay').style.display = 'flex';
+            return;
+        }
+
+        const currentActivePage = document.querySelector('.page.active');
+        if (currentActivePage) {
+            pageScrollPositions[currentActivePage.id] = window.scrollY;
+        }
+
+        const loader = document.getElementById('progress-bar-loader');
+        const headerImg = document.getElementById('header-img');
+
+        if (pageId === 'home-page') {
+             headerImg.src = HEADER_URLS.home;
+        } else {
+             headerImg.src = HEADER_URLS.other;
+        }
+
+        loader.classList.add('visible');
+
+        if (pageId === 'orders-page') {
+            setTimeout(preloadSubPages, 200);
+        }
+        
+        const transitionTime = 1000;
+
+        setTimeout(() => {
+            const targetPage = document.getElementById(pageId);
+                
+            if (targetPage) {
+                if (pageId === 'home-page') renderHomePageContent();
+                else if (pageId === 'orders-page') renderAllOrdersPageContent();
+                else if (pageId === 'details-page' && params) renderOrderDetails(params.id);
+                else if (pageId === 'image-page' && params) renderImagePage(params);
+                else if (pageId === 'track-page' && params) {
+                    renderTrackPage(params.id);
+                    adjustStickyHeaderTop();
+                } else if (pageId === 'order-summary-page' && params) renderOrderSummaryPage(params.id);
+                else if (pageId === 'invoice-page' && params) renderInvoicePage(params.id);
+                else if (pageId === 'admin-page') renderAdminPanel();
+                
+                pages.forEach(page => {
+                    if (page.id !== pageId) page.classList.remove('active');
+                });
+                targetPage.classList.add('active');
+                
+                if (isBackNavigation && pageScrollPositions[pageId] !== undefined) {
+                    window.scrollTo(0, pageScrollPositions[pageId]);
+                } else {
+                    window.scrollTo(0, 0);
+                }
+                isBackNavigation = false;
+            }
+            
+            loader.classList.remove('visible');
+        }, transitionTime);
+    }
+
+    function handleRouteChange() {
+        const hash = window.location.hash || '#home';
+        
+        if (hash.startsWith('#details-')) {
+            const id = parseInt(hash.split('-')[1]);
+            showPage('details-page', { id });
+        } else if (hash.startsWith('#image-')) {
+            const [, id, type] = hash.split('-');
+            showPage('image-page', { id: parseInt(id), type });
+        } else if (hash.startsWith('#track-')) {
+            const id = parseInt(hash.split('-')[1]);
+            showPage('track-page', { id });
+        } else if (hash.startsWith('#order-summary-')) {
+            const id = parseInt(hash.split('-')[2]);
+            showPage('order-summary-page', { id });
+        } else if (hash.startsWith('#invoice-')) {
+            const id = parseInt(hash.split('-')[1]);
+            showPage('invoice-page', { id });
+        } else if (hash === '#admin') {
+            showPage('admin-page');
+        } else if (hash === '#orders') {
+            showPage('orders-page');
+        } else {
+            showPage('home-page');
+        }
+    }
+    
+    function formatIndianCurrency(value) {
+        if (!value && value !== 0) return '';
+        let numStr = String(value).replace(/[^0-9.-]/g, '');
+        let number = parseFloat(numStr);
+        if (isNaN(number)) return '';
+        
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2
+        }).format(number);
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+        return adjustedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    
+    // --- CUSTOM ALERT LOGIC ---
+    function showCustomAlert(msg) {
+        document.getElementById('custom-msg-text').textContent = msg;
+        document.getElementById('custom-msg-overlay').style.display = 'flex';
+    }
+    
+    document.getElementById('custom-msg-close').addEventListener('click', () => {
+        document.getElementById('custom-msg-overlay').style.display = 'none';
+    });
+
+    // --- CUSTOM CONFIRM LOGIC ---
+    document.getElementById('confirm-no').addEventListener('click', () => {
+        document.getElementById('custom-confirm-overlay').style.display = 'none';
+        itemToDeleteId = null;
+        itemToDeleteType = null;
+    });
+
+    document.getElementById('confirm-yes').addEventListener('click', async () => {
+        document.getElementById('custom-confirm-overlay').style.display = 'none';
+        if(itemToDeleteId && itemToDeleteType) {
+            const key = itemToDeleteType === 'buyAgain' ? 'buyAgainItems' : 'purchaseHistoryItems';
+            let items = DB.get(key);
+            const itemToDelete = items.find(item => item.id === itemToDeleteId);
+            
+            if (currentUser.id && itemToDelete && itemToDelete.orderNumber) {
+                showCustomAlert("Deleting from server...");
+                try {
+                     await fetch(GAS_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ 
+                            action: 'deleteItem', 
+                            id: currentUser.id, 
+                            orderNumber: itemToDelete.orderNumber 
+                        })
+                    });
+                } catch(e) { console.error("Delete sync failed", e); }
+            }
+
+            items = items.filter(item => item.id !== itemToDeleteId);
+            DB.set(key, items);
+            renderAdminPanel();
+        }
+    });
+
+    // --- RENDER FUNCTIONS ---
+    function createCard(imageUrl, link = null) {
+        const card = document.createElement(link ? 'a' : 'div');
+        card.className = 'card';
+        if (link) card.href = link;
+        card.innerHTML = `<img src="${imageUrl}" alt="Product Image">`;
+        return card;
+    }
+    
+    function renderHomePageCardSection(sectionKey) {
+        const container = document.getElementById(`${sectionKey}-cards`);
+        if (!container) return;
+        
+        if (sectionKey === 'yourOrders' && isFirstLoad) {
+            container.innerHTML = `
+                <div class="skeleton skeleton-card"><div class="skeleton-inner"></div></div>
+                <div class="skeleton skeleton-card"><div class="skeleton-inner"></div></div>
+                <div class="skeleton skeleton-card"><div class="skeleton-inner"></div></div>
+            `;
+            setTimeout(() => {
+                isFirstLoad = false;
+                sessionStorage.setItem('appLoaded', 'true');
+                renderHomePageContent(); 
+            }, 1500);
+            return;
+        }
+
+        let items;
+        container.innerHTML = '';
+
+        if (sectionKey === 'yourOrders') {
+            const orders = DB.get('purchaseHistoryItems');
+            if (orders && orders.length > 0) {
+                orders.forEach(item => {
+                    const linkHref = `#track-${item.id}`; 
+                    container.appendChild(createCard(item.imageUrl, linkHref));
+                });
+            } else {
+                container.innerHTML = `<p class="placeholder-text">No recent orders.</p>`;
+            }
+        } else if (sectionKey === 'buyAgain') {
+             items = DB.get('buyAgainItems');
+             if (items && items.length > 0) {
+                 items.forEach(item => {
+                     const url = typeof item === 'string' ? item : item.imageUrl;
+                     if(url) container.appendChild(createCard(url));
+                 });
+             } else {
+                 container.innerHTML = `<p class="placeholder-text">No items to buy again.</p>`;
+             }
+        } else {
+            items = DB.get(sectionKey);
+            if (items && items.length > 0) {
+                items.forEach(url => { if (url && url.trim()) container.appendChild(createCard(url)); });
+            } else {
+                container.innerHTML = `<p class="placeholder-text">Click "Edit" to add images.</p>`;
+            }
+        }
+    }
+
+    function loadListPreviews() {
+        const listImages = DB.get('yourLists');
+        const preview1 = document.getElementById('list-preview-1');
+        const preview2 = document.getElementById('list-preview-2');
+        const extraItems = document.getElementById('list-extra-items');
+        
+        if(preview1) preview1.style.backgroundImage = listImages[0] ? `url(${listImages[0]})` : 'none';
+        if(preview2) preview2.style.backgroundImage = listImages[1] ? `url(${listImages[1]})` : 'none';
+        if(extraItems) {
+            const extraCount = Math.max(0, listImages.length - 2);
+            extraItems.textContent = `+${extraCount}`;
+            extraItems.style.display = extraCount > 0 ? 'flex' : 'none';
+        }
+    }
+
+    function renderHomePageContent() {
+        renderHomePageCardSection('yourOrders');
+        renderHomePageCardSection('buyAgain');
+        renderHomePageCardSection('keepShopping');
+        loadListPreviews();
+    }
+
+    function renderAllOrdersPageContent() {
+        const items = DB.get('purchaseHistoryItems');
+        const container = document.getElementById('purchase-history-container');
+        if(!container) return;
+        
+        container.innerHTML = '';
+        items.forEach(item => {
+            const statusText = item.deliveryStatusText || 'Delivered on';
+            let statusDisplay = '';
+
+            if (statusText.startsWith("Arriving") && item.weekName && item.weekName.trim() !== "") {
+                 statusDisplay = `${statusText} ${item.weekName}`;
+            } else if (['Delivered on', 'Arriving on'].includes(statusText)) {
+                const hideDateStatuses = ['Arriving', 'Arriving today', 'Arriving tomorrow', 'Delivered today'];
+                const shouldHideDate = hideDateStatuses.some(s => statusText.toLowerCase() === s.toLowerCase()) || statusText === 'Arriving'; 
+                
+                if (!shouldHideDate && item.deliveryDate) {
+                    statusDisplay = `${statusText} ${formatDate(item.deliveryDate)}`;
+                } else {
+                    statusDisplay = statusText.replace(' on', '');
+                }
+            } else {
+                statusDisplay = statusText;
+            }
+            
+            let linkHref = `#track-${item.id}`;
+            if (statusText === 'Delivered on' || statusText === 'Delivered Today') {
+                linkHref = `#details-${item.id}`;
+            }
+
+            const greenStatuses = ['Arriving on', 'Arriving today', 'Arriving tomorrow', 'Arriving'];
+            const isGreen = greenStatuses.some(s => statusText.startsWith(s));
+
+            if (isGreen) {
+                container.innerHTML += `
+                <div class="purchase-item-card">
+                    <div class="item-image"><img src="${item.imageUrl}" alt="${item.name}"></div>
+                    <div class="item-info">
+                         <a href="${linkHref}" class="item-name" style="color: #3E8277; font-weight: bold; text-decoration: none;">${statusDisplay}</a>
+                    </div>
+                </div>`;
+            } else {
+                container.innerHTML += `
+                <div class="purchase-item-card">
+                    <div class="item-image"><img src="${item.imageUrl}" alt="${item.name}"></div>
+                    <div class="item-info">
+                         <a href="${linkHref}" class="item-name">${item.name}</a>
+                        <p class="item-status">${statusDisplay}</p>
+                    </div>
+                </div>`;
+            }
+        });
+        
+        const buyItems = DB.get('buyAgainItems');
+        const buyContainer = document.getElementById('buy-again-container');
+        if(buyContainer) {
+            buyContainer.innerHTML = '';
+            buyItems.forEach(item => {
+                const imgUrl = typeof item === 'string' ? item : item.imageUrl;
+                const name = typeof item === 'string' ? '' : item.name;
+                
+                if(imgUrl) {
+                    buyContainer.innerHTML += `
+                        <div class="buy-again-card">
+                            <img src="${imgUrl}" alt="${name || 'Product'}">
+                            <p>${name || ''}</p> 
+                        </div>`;
+                }
+            });
+        }
+    }
+
+    function renderImagePage(params) {
+        const { id, type } = params;
+        const key = type === 'buyAgain' ? 'buyAgainItems' : 'purchaseHistoryItems';
+        const items = DB.get(key);
+        const item = items.find(i => i.id === id);
+        const container = document.getElementById('image-page-content');
+        
+        if (item && item.imagePageUrl) {
+            container.innerHTML = `<img src="${item.imagePageUrl}" alt="${item.name}">`;
+        } else {
+            container.innerHTML = '<p>Image not available.</p>';
+        }
+    }
+
+    function renderOrderDetails(itemId) {
+        const items = DB.get('purchaseHistoryItems');
+        const item = items.find(p => p.id === itemId);
+        const container = document.getElementById('order-details-content');
+        if (!item) {
+            container.innerHTML = '<p>Order not found.</p>';
+            return;
+        }
+        
+        const extraImageHtml = `<img src="${FIXED_URLS.detailAd}" alt="Advertisement" class="details-page-ad-image">`;
+        
+        const statusText = item.deliveryStatusText || 'Delivered on';
+        let statusDisplay = '';
+        if (statusText.startsWith("Arriving") && item.weekName && item.weekName.trim() !== "") {
+             statusDisplay = `${statusText} ${item.weekName}`;
+        } else if (['Delivered on', 'Arriving on'].includes(statusText)) {
+            const hideDateStatuses = ['Arriving', 'Arriving today', 'Arriving tomorrow', 'Delivered today'];
+            const shouldHideDate = hideDateStatuses.some(s => statusText.toLowerCase() === s.toLowerCase());
+            
+            if (!shouldHideDate && item.deliveryDate) {
+                statusDisplay = `${statusText} ${formatDate(item.deliveryDate)}`;
+            } else {
+                statusDisplay = statusText.replace(' on', '');
+            }
+        } else {
+            statusDisplay = statusText;
+        }
+
+        let handedToResidentHtml = '';
+        if (statusText === 'Delivered Today' || statusText === 'Delivered on') {
+             handedToResidentHtml = '<div>Package was handed to resident</div>';
+        }
+
+        container.innerHTML = `
+            <div class="product-info-module">
+                <a href="#image-${item.id}-purchaseHistory">
+                    <img src="${item.imageUrl}" alt="${item.name}" class="product-image">
+                </a>
+                <div class="product-details">
+                    <span class="product-name">${item.name}</span>
+                    <span class="share-item" data-product-name="${item.name}" data-share-link="${item.shareLink || ''}">Share this item</span>
+                </div>
+            </div>
+            <div class="delivery-status-module">
+                <div class="delivery-status">
+                    <div class="icon">&#10003;</div>
+                    <div>
+                        <div class="text-bold">${statusDisplay}</div>
+                        ${handedToResidentHtml}
+                    </div>
+                </div>
+                <div class="delivery-feedback">
+                    <div class="feedback-text">Your delivery feedback</div>
+                    <div class="stars">★★★★★</div>
+                </div>
+                <a href="#track-${item.id}" class="list-button"><span>Track package</span><span class="arrow">&gt;</span></a>
+            </div>
+            <hr class="separator">
+            <div class="module-with-buttons">
+                <h3>Need help with your item?</h3>
+                <a href="#admin" class="list-button admin-edit-trigger" data-id="${item.id}" data-type="purchaseHistory"><span>Get product support</span><span class="arrow">&gt;</span></a>
+                <a href="#" class="list-button">
+                    <span class="button-text">
+                        Replace item
+                        <span class="sub-text">Eligible until ${formatDate(item.eligibleDate)}</span>
+                    </span>
+                    <span class="arrow">&gt;</span>
+                </a>
+            </div>
+            <div class="module-with-buttons">
+                <a href="#" class="list-button"><span>Buy it again</span><span class="arrow">&gt;</span></a>
+            </div>
+            <hr class="separator">
+            <div class="module-with-buttons">
+                <h3>How's your item?</h3>
+                <a href="#" class="list-button"><span>Write a product review</span><span class="arrow">&gt;</span></a>
+                <a href="#" class="list-button"><span>Create a video review</span><span class="arrow">&gt;</span></a>
+                <a href="#" class="list-button"><span>Leave seller feedback</span><span class="arrow">&gt;</span></a>
+            </div>
+            <div class="module-with-buttons">
+                <h3>Order info</h3>
+                <a href="#order-summary-${item.id}" class="list-button"><span>View order details</span><span class="arrow">&gt;</span></a>
+                <a href="#" class="list-button"><span>Share gift receipt</span><span class="arrow">&gt;</span></a>
+                <a href="#" onclick="triggerInvoiceLoader(${item.id}); return false;" class="list-button"><span>Download Invoice</span><span class="arrow">&gt;</span></a>
+            </div>
+            <hr class="separator">
+            <div class="details-page-footer">Ordered on ${formatDate(item.orderDate)}</div>
+            ${extraImageHtml}
+            `;
+    }
+
+    function renderTrackPage(itemId) {
+        const container = document.getElementById('track-page-content');
+        const items = DB.get('purchaseHistoryItems');
+        const item = items.find(p => p.id === itemId);
+
+        if (!item) {
+            container.innerHTML = '<p>Item not found.</p>';
+            return;
+        }
+
+        const statusText = item.deliveryStatusText || 'Delivered on';
+        let statusDisplay = '';
+        if (statusText.startsWith("Arriving") && item.weekName && item.weekName.trim() !== "") {
+             statusDisplay = `${statusText} ${item.weekName}`;
+        } else if (['Delivered on', 'Arriving on'].includes(statusText)) {
+            const hideDateStatuses = ['Arriving', 'Arriving today', 'Arriving tomorrow', 'Delivered today'];
+            const shouldHideDate = hideDateStatuses.some(s => statusText.toLowerCase() === s.toLowerCase());
+            if (!shouldHideDate && item.deliveryDate) {
+                statusDisplay = `${statusText} ${formatDate(item.deliveryDate)}`;
+            } else {
+                statusDisplay = statusText.replace(' on', '');
+            }
+        } else {
+            statusDisplay = statusText;
+        }
+        
+        const defaultAddress = "Shipping address not set. Please add it in the Admin Panel.";
+        const address = item.shippingAddress || defaultAddress;
+        const progressImg = item.progressStepImageUrl;
+        
+        const isJustOrdered = progressImg === IMG_ORDERED;
+
+        let buttonsHtml = '';
+        if (isJustOrdered) {
+             buttonsHtml = `
+                <a href="#" class="amz-btn">Cancel order</a>
+                <a href="https://www.amazon.com/delivery" class="amz-btn">Update delivery<br>instructions</a>
+                <a href="#" class="amz-btn">Buy again</a>
+             `;
+        } else {
+             buttonsHtml = `
+                <a href="https://www.amazon.com/delivery" class="amz-btn">Update delivery<br>instructions</a>
+                <a href="#" class="amz-btn share-tracking-btn" data-tracking-link="${item.shareTrackingLink || ''}" data-product-name="${item.name || ''}">Share tracking</a>
+                <a href="#" class="amz-btn">Request cancellation</a>
+                <a href="#" class="amz-btn">Buy again</a>
+             `;
+        }
+
+        const carouselHtml = `
+            <div class="amz-scroll-container">
+                ${buttonsHtml}
+            </div>
+        `;
+        
+        let shippedWithHtml = '';
+        if (!isJustOrdered) {
+             shippedWithHtml = `
+                <div style="border-top: 1px solid #d5d9d9; margin: 8px 16px 16px 16px;"></div>
+                <div class="shipped-with-info">
+                    <h3>Shipped with Amazon</h3>
+                    <p>Tracking ID: ${item.trackingId || 'N/A'}</p>
+                    <a href="#" class="see-all-updates-btn">see all updates</a>
+                </div>
+             `;
+        }
+
+        container.innerHTML = `
+            <div class="track-module sticky-track-header">
+                <div class="track-module-header">
+                    <h2>${statusDisplay}</h2>
+                    <a href="#orders" class="see-all-orders">see all orders</a>
+                </div>
+                <div class="track-product-image-container">
+                    <a href="#image-${item.id}-purchaseHistory"><img src="${item.imageUrl}" alt="${item.name}" class="track-product-image"></a>
+                </div>
+                <hr class="thin-separator">
+            </div>
+            <img src="${progressImg}" alt="Delivery Status Map" class="full-width-image">
+            ${carouselHtml}
+            ${shippedWithHtml}
+            <div class="track-module">
+                <hr class="thick-separator">
+                <div class="shipping-address-section">
+                    <h3>Shipping Address</h3>
+                    <p>${address}</p>
+                </div>
+                <hr class="thick-separator">
+                <div class="order-info-section">
+                    <h2>Order Info</h2>
+                    <hr class="thick-separator-light">
+                    <a href="#order-summary-${itemId}" class="order-details-link">
+                        <span>View order details</span>
+                        <span class="arrow">&gt;</span>
+                    </a>
+                    <hr class="thick-separator-light">
+                </div>
+            </div>
+            <img src="${FIXED_URLS.trackBottom}" alt="Order Details Summary" class="full-width-image">
+        `;
+        
+        const updateBtn = container.querySelector('.see-all-updates-btn');
+        if (updateBtn) {
+            updateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const overlay = document.getElementById('updates-overlay');
+                const overlayImg = document.getElementById('updates-overlay-img');
+                const updatesImgUrl = item.updatesOverlayImg || '';
+                
+                if (updatesImgUrl) {
+                    overlayImg.src = updatesImgUrl;
+                    overlay.classList.add('visible');
+                } else {
+                    showCustomAlert('Please set the "Tracking Updates Overlay Image URL" in the Wallet settings for this item.');
+                }
+            });
+        }
+    }
+    
+    // Updates Overlay Logic
+    const updatesOverlay = document.getElementById('updates-overlay');
+    if (updatesOverlay) {
+        const backdrop = updatesOverlay.querySelector('.updates-backdrop');
+        if (backdrop) {
+            backdrop.addEventListener('click', () => {
+                updatesOverlay.classList.remove('visible');
+            });
+        }
+    }
+
+    function renderOrderSummaryPage(itemId) {
+        const container = document.getElementById('order-summary-content');
+        const items = DB.get('purchaseHistoryItems');
+        const item = items.find(p => p.id === itemId);
+
+        if (!item) {
+            container.innerHTML = '<p>Item details not found.</p>';
+            return;
+        }
+        
+        const paymentMethodText = item.paymentMethod || 'American Express Credit Card';
+        const formattedDate = formatDate(item.orderDate);
+        
+        let statusDisplay = '';
+        const statusText = item.deliveryStatusText || 'Delivered on';
+        if (statusText.startsWith("Arriving") && item.weekName && item.weekName.trim() !== "") {
+             statusDisplay = `${statusText} ${item.weekName}`;
+        } else if (['Delivered on', 'Arriving on'].includes(statusText)) {
+            const hideDateStatuses = ['Arriving', 'Arriving today', 'Arriving tomorrow', 'Delivered today'];
+            const shouldHideDate = hideDateStatuses.some(s => statusText.toLowerCase() === s.toLowerCase());
+            if (!shouldHideDate && item.deliveryDate) {
+                statusDisplay = `${statusText} ${formatDate(item.deliveryDate)}`;
+            } else {
+                statusDisplay = statusText.replace(' on', '');
+            }
+        } else {
+            statusDisplay = statusText;
+        }
+
+        const isJustOrdered = item.progressStepImageUrl === IMG_ORDERED;
+
+        let buttonsHtml = '';
+        if (isJustOrdered) {
+            buttonsHtml = `
+                <a href="#track-${item.id}" class="os-amz-action-btn">Track package</a>
+                <a href="#" class="os-amz-action-btn">Cancel order</a>
+                <a href="#" class="os-amz-action-btn">Buy it again</a>
+            `;
+        } else {
+            buttonsHtml = `
+                <a href="#track-${item.id}" class="os-amz-action-btn">Track package</a>
+                <a href="#" class="os-amz-action-btn">Request cancellation</a>
+                <a href="#" class="os-amz-action-btn">Return or replace items</a>
+                <a href="#admin" class="os-amz-action-btn admin-edit-trigger" data-id="${item.id}" data-type="purchaseHistory">Write a product review</a>
+            `;
+        }
+        
+        const formattedAddress = (item.shippingAddress || '').replace(/\n/g, '<br>');
+
+        container.innerHTML = `
+          <div class="os-sub-nav-bar" id="summary-back-btn">
+            &lt; Your Orders
+          </div>
+
+          <div class="os-content-container">
+
+            <div class="os-section-title first">Order Details</div>
+            <div class="os-amz-card">
+              <div class="os-od-padding">
+                <div class="os-od-row">
+                  <span class="os-label-grey">Order placed</span>
+                  <span class="os-val-black">${formattedDate}</span>
+                </div>
+                <div class="os-od-row">
+                  <span class="os-label-grey">Order number</span>
+                  <span class="os-val-black">${item.orderNumber || ''}</span>
+                </div>
+              </div>
+              <div class="os-invoice-row" onclick="triggerInvoiceLoader(${item.id});">
+                <span>Download Invoice</span>
+                <span class="os-chevron"></span>
+              </div>
+            </div>
+
+            <div class="os-amz-card" style="margin-top: 20px;">
+              <div class="os-od-padding">
+                <div class="os-arriving-text">${statusDisplay}</div>
+                
+                <div class="os-product-flex">
+                  <div class="os-img-box">
+                     <a href="#image-${item.id}-purchaseHistory"><img src="${item.imageUrl}" alt="${item.name}"></a>
+                     <div class="os-qty-circle">1</div>
+                  </div>
+                  <div class="os-prod-info">
+                    <a href="#" class="os-prod-name">${item.name}</a>
+                    <div class="os-sold-line">Sold by: <a href="#" class="os-blue-link">${item.sellerInfo || ''}</a></div>
+                    <div class="os-price-text">${formatIndianCurrency(item.price)}</div>
+                  </div>
+                </div>
+
+                <div class="os-button-container">
+                  ${buttonsHtml}
+                </div>
+              </div>
+            </div>
+
+            <div class="os-section-title">Payment method</div>
+            <div class="os-amz-card os-info-box">
+              ${paymentMethodText}
+            </div>
+
+            <div class="os-section-title">Ship to</div>
+            <div class="os-amz-card os-info-box">
+              ${formattedAddress}
+            </div>
+
+            <div class="os-section-title">Order Summary</div>
+            <div class="os-amz-card os-info-box">
+              <div class="os-summary-line">
+                <span>Item(s) Subtotal:</span>
+                <span>${formatIndianCurrency(item.price)}</span>
+              </div>
+              <div class="os-summary-line">
+                <span>Shipping:</span>
+                <span>${formatIndianCurrency(0)}</span>
+              </div>
+              <div class="os-summary-line">
+                <span>Total:</span>
+                <span>${formatIndianCurrency(item.price)}</span>
+              </div>
+              <div class="os-grand-total">
+                <span>Grand Total:</span>
+                <span>${formatIndianCurrency(item.price)}</span>
+              </div>
+            </div>
+            
+            <img src="${FIXED_URLS.summaryBottom}" class="os-full-width-image">
+
+          </div>
+        `;
+        document.getElementById('summary-back-btn').addEventListener('click', () => { window.history.back(); });
+    }
+
+    function renderInvoicePage(itemId) {
+        const container = document.getElementById('invoice-page-content');
+        const items = DB.get('purchaseHistoryItems');
+        const item = items.find(p => p.id === itemId);
+
+        if (!item) {
+            container.innerHTML = '<p>Order not found.</p>';
+            return;
+        }
+
+        const formattedOrderDate = formatDate(item.orderDate);
+        const formattedArrivalDate = item.deliveryStatusText + " " + formatDate(item.deliveryDate);
+        const addressLines = (item.shippingAddress || '').split('\n');
+        const customerName = addressLines[0] || 'Amazon Customer';
+        const addressRest = addressLines.slice(1).join('<br>');
+        const paymentText = item.paymentMethod || 'Credit Card';
+
+        container.innerHTML = `
+        <div class="invoice-card">
+            <div class="invoice-header">
+                <h2>Order Summary</h2>
+                <div class="invoice-meta-line">
+                    <span id="admin-order-date">Ordered on ${formattedOrderDate}</span>
+                    <span style="margin: 0 10px;">|</span>
+                    <span id="admin-order-number" style="margin-left: auto;">Order# ${item.orderNumber}</span>
+                </div>
+                <hr class="invoice-divider">
+            </div>
+
+            <div class="invoice-grid">
+                <div>
+                    <span class="invoice-col-label">Ship to</span>
+                    <div id="admin-shipping-address">
+                        ${customerName}<br>
+                        ${addressRest}
+                    </div>
+                </div>
+                <div>
+                    <span class="invoice-col-label">Payment method</span>
+                    <div id="admin-payment-method">
+                        ${paymentText}
+                    </div>
+                </div>
+                <div>
+                    <span class="invoice-col-label">Order Summary</span>
+                    <table class="invoice-summary-table">
+                        <tr>
+                            <td>Item(s) Subtotal:</td>
+                            <td class="price-col" id="admin-subtotal">${formatIndianCurrency(item.price)}</td>
+                        </tr>
+                        <tr>
+                            <td>Shipping:</td>
+                            <td class="price-col" id="admin-shipping">${formatIndianCurrency(0)}</td>
+                        </tr>
+                        <tr>
+                            <td>Total:</td>
+                            <td class="price-col" id="admin-total">${formatIndianCurrency(item.price)}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold; color: #333;">Grand Total:</td>
+                            <td class="price-col" style="font-weight: bold; color: #333;" id="admin-grand-total">${formatIndianCurrency(item.price)}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="invoice-product-section">
+                <span id="admin-arrival-text" class="invoice-arrival-text">${formattedArrivalDate}</span>
+                <div class="invoice-product-row">
+                    <div class="invoice-img-container">
+                        <img id="admin-product-img" src="${item.imageUrl}" alt="Product">
+                    </div>
+                    <div class="invoice-product-details">
+                        <a href="#" id="admin-product-link" class="invoice-product-link">${item.name}</a>
+                        <span id="admin-seller-text" class="invoice-seller-text">Sold by: ${item.sellerInfo || 'Seller'}</span>
+                        <span id="admin-product-price" class="invoice-price-text">${formatIndianCurrency(item.price)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function renderAdminList(type) {
+        const key = type === 'buyAgain' ? 'buyAgainItems' : 'purchaseHistoryItems';
+        const listId = type === 'buyAgain' ? 'buy-again-admin-list' : 'purchase-history-admin-list';
+        const items = DB.get(key);
+        const listElement = document.getElementById(listId);
+        if (!listElement) return;
+
+        listElement.innerHTML = '';
+        if(items.length === 0) {
+            listElement.innerHTML = `<p style="padding-left: 5px; color: #666;">No items in this category yet.</p>`;
+            return;
+        }
+
+        items.forEach(item => {
+            const card = document.createElement('li');
+            card.className = 'item-list-admin-card';
+            card.setAttribute('draggable', 'true');
+            card.dataset.id = item.id;
+            
+            const imgUrl = typeof item === 'string' ? item : item.imageUrl;
+            const name = typeof item === 'string' ? 'URL Item' : item.name;
+
+            card.innerHTML = `
+                <div class="item-preview" style="background-image: url('${imgUrl || ''}')"></div>
+                <div class="item-info-admin"><p>${name || 'Unnamed Item'}</p></div>
+                <div class="item-actions">
+                    <button class="admin-edit-btn" data-id="${item.id}" data-type="${type}">Edit</button>
+                    <button class="admin-delete-btn" data-id="${item.id}" data-type="${type}">Delete</button>
+                </div>`;
+            listElement.appendChild(card);
+        });
+    }
+
+    function renderAdminPanel() {
+        document.getElementById('admin-user-id').textContent = `ID: ${currentUser.id || 'N/A'}`;
+        document.getElementById('admin-user-rs').textContent = `${currentUser.rs} Rs`;
+        renderAdminList('purchaseHistory');
+        checkNotifications();
+    }
+
+    const itemModal = document.getElementById('item-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const itemForm = document.getElementById('item-form');
+    
+    // Wallet Logic
+    const walletFields = document.getElementById('wallet-fields');
+    const walletBtn = document.getElementById('wallet-btn');
+    const walletModal = document.getElementById('wallet-key-modal');
+    const walletVerifyBtn = document.getElementById('wallet-verify-btn');
+    const walletCancelBtn = document.getElementById('wallet-cancel-btn');
+    const walletKeyInput = document.getElementById('wallet-key-input');
+    
+    // Accordion Logic
+    const accordions = document.querySelectorAll('.form-section-accordion');
+    accordions.forEach(acc => {
+        acc.addEventListener('click', (e) => {
+             // If clicking summary
+             if(e.target.tagName === 'SUMMARY' || e.target.parentElement.tagName === 'SUMMARY') {
+                 // Close others
+                 if (!acc.hasAttribute('open')) { // about to open
+                     accordions.forEach(other => {
+                         if (other !== acc) other.removeAttribute('open');
+                     });
+                 }
+             }
+        });
+    });
+
+    function unlockAllFields() {
+        const allInputs = itemForm.querySelectorAll('input, select, textarea');
+        allInputs.forEach(el => el.disabled = false);
+    }
+    
+    // Wallet Remember Me Logic
+    walletBtn.addEventListener('click', () => {
+        const savedKey = localStorage.getItem('walletKey');
+        if (cachedWalletKey || savedKey) {
+            // Auto Verify
+            if(!cachedWalletKey) cachedWalletKey = savedKey; // Restore from local
+            walletFields.style.display = 'block';
+            unlockAllFields();
+            showCustomAlert('Access Granted (Auto)');
+        } else {
+            walletKeyInput.value = ''; 
+            walletModal.style.display = 'flex';
+        }
+    });
+    
+    walletCancelBtn.addEventListener('click', () => { walletModal.style.display = 'none'; });
+    
+    walletVerifyBtn.addEventListener('click', async () => {
+        const key = walletKeyInput.value;
+        const rememberKey = document.getElementById('wallet-remember-me').checked;
+        if (!key) return;
+
+        if (!currentUser.id) return;
+
+        const originalText = walletVerifyBtn.textContent;
+        walletVerifyBtn.textContent = 'Checking...';
+        
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'verifyWallet', id: currentUser.id, key: key })
+            });
+            const res = await response.json();
+            
+            if (res.success) {
+                cachedWalletKey = key; 
+                if(rememberKey) localStorage.setItem('walletKey', key);
+                walletFields.style.display = 'block';
+                unlockAllFields(); 
+                showCustomAlert('Access Granted');
+            } else {
+                walletFields.style.display = 'none';
+                showCustomAlert(res.message); 
+            }
+        } catch (e) {
+            console.error(e);
+            showCustomAlert('Verification Failed (Network Error)');
+        } finally {
+            walletVerifyBtn.textContent = originalText;
+            walletModal.style.display = 'none';
+        }
+    });
+
+    function toggleFormFields(disabled) {
+        const restrictedIds = ['itemName', 'itemImage', 'orderDate', 'shippingAddress', 'paymentMethod', 'orderNumber']; 
+        restrictedIds.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.disabled = disabled;
+        });
+    }
+
+    // Week Name Logic
+    document.getElementById('deliveryStatus').addEventListener('change', (e) => {
+        const weekGroup = document.getElementById('weekNameGroup');
+        if(e.target.value === 'Arriving') {
+            weekGroup.style.display = 'block';
+        } else {
+            weekGroup.style.display = 'none';
+        }
+    });
+    
+    // Type Logic (BuyAgain vs PurchaseHistory)
+    const premiumToggleContainer = document.getElementById('premium-toggle-container');
+    const saveBtn = document.getElementById('modal-save-btn');
+    const premiumToggle = document.getElementById('premium-toggle');
+
+    function updateSaveButtonText() {
+        if(itemForm.itemType.value === 'buyAgain') {
+             saveBtn.textContent = '0Rs Place Order';
+             premiumToggleContainer.style.display = 'none';
+        } else {
+             if(premiumToggle.checked) {
+                 saveBtn.textContent = '1200Rs Place Order';
+             } else {
+                 saveBtn.textContent = '500Rs Place Order';
+             }
+             premiumToggleContainer.style.display = 'flex';
+        }
+    }
+
+    document.getElementById('itemType').addEventListener('change', (e) => {
+        const type = e.target.value;
+        if (type === 'buyAgain') {
+             // Clear all except image
+             itemForm.itemName.value = '';
+             itemForm.deliveryStatus.value = '';
+             itemForm.orderDate.value = '';
+             // Hide other accordions
+             document.getElementById('accordion-delivery').style.display = 'none';
+             document.getElementById('accordion-tracking').style.display = 'none';
+             document.getElementById('accordion-summary').style.display = 'none';
+             document.getElementById('itemNameGroup').style.display = 'none';
+        } else {
+             document.getElementById('accordion-delivery').style.display = 'block';
+             document.getElementById('accordion-tracking').style.display = 'block';
+             document.getElementById('accordion-summary').style.display = 'block';
+             document.getElementById('itemNameGroup').style.display = 'block';
+        }
+        updateSaveButtonText();
+    });
+
+    premiumToggle.addEventListener('change', updateSaveButtonText);
+
+    function openModalForEdit(itemId, type) {
+        const key = type === 'buyAgain' ? 'buyAgainItems' : 'purchaseHistoryItems';
+        const items = DB.get(key);
+        const item = items.find(i => i.id === itemId);
+        if (!item) return;
+
+        modalTitle.textContent = 'Edit Item';
+        saveBtn.textContent = 'Update Changes';
+        walletFields.style.display = 'none';
+        
+        premiumToggleContainer.style.display = 'none'; 
+
+        itemForm.editingItemId.value = item.id;
+        itemForm.itemType.value = type;
+        
+        // Trigger Change logic to hide fields if BuyAgain
+        itemForm.itemType.dispatchEvent(new Event('change'));
+
+        itemForm.itemName.value = item.name || '';
+        itemForm.itemImage.value = item.imageUrl || '';
+        itemForm.deliveryStatus.value = item.deliveryStatusText || 'Delivered on';
+        
+        if(item.deliveryStatusText === 'Arriving') {
+            document.getElementById('weekNameGroup').style.display = 'block';
+        } else {
+            document.getElementById('weekNameGroup').style.display = 'none';
+        }
+
+        itemForm.orderDate.value = item.orderDate || '';
+        itemForm.deliveryDate.value = item.deliveryDate || '';
+        itemForm.weekName.value = item.weekName || ''; 
+        itemForm.shippingAddress.value = item.shippingAddress || '';
+        itemForm.progressStepImageUrl.value = item.progressStepImageUrl || IMG_ORDERED;
+        itemForm.sellerInfo.value = item.sellerInfo || '';
+        itemForm.price.value = item.price || '';
+        itemForm.paymentMethod.value = item.paymentMethod || '';
+        
+        itemForm.itemImagePageUrl.value = item.imagePageUrl || '';
+        itemForm.shareTrackingLink.value = item.shareTrackingLink || '';
+        itemForm.trackingId.value = item.trackingId || '';
+        itemForm.shareLink.value = item.shareLink || '';
+        itemForm.updatesOverlayImg.value = item.updatesOverlayImg || '';
+        
+        itemForm.orderNumber.value = item.orderNumber || '';
+
+        toggleFormFields(true);
+        itemModal.classList.add('visible');
+    }
+
+    function openModalForNew() {
+        modalTitle.textContent = 'Add Product';
+        itemForm.reset();
+        itemForm.editingItemId.value = '';
+        walletFields.style.display = 'none';
+        document.getElementById('weekNameGroup').style.display = 'none';
+        toggleFormFields(false);
+        document.getElementById('orderNumber').disabled = true; 
+        
+        // Default View
+        itemForm.itemType.value = 'purchaseHistory';
+        itemForm.itemType.dispatchEvent(new Event('change'));
+        premiumToggle.checked = false;
+        updateSaveButtonText();
+
+        itemModal.classList.add('visible');
+    }
+
+    function closeModal() {
+        itemModal.classList.remove('visible');
+    }
+    
+    // --- API & Login Handling ---
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        const id = document.getElementById('login-id').value;
+        const pass = document.getElementById('login-pass').value;
+        const remember = document.getElementById('remember-me').checked;
+        const btn = document.getElementById('login-btn');
+        const msg = document.getElementById('login-msg');
+
+        if(!id || !pass) return;
+
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+        msg.textContent = '';
+
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                redirect: 'follow', 
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'login', id: id, password: pass })
+            });
+            const text = await response.text(); 
+            var res = JSON.parse(text); 
+            if(res.success) {
+                currentUser = { id: id, rs: res.rs, orderId: res.orderId };
+                
+                if(remember) {
+                    localStorage.setItem('savedCredentials', JSON.stringify({ id: id, pass: pass }));
+                } else {
+                    localStorage.removeItem('savedCredentials');
+                }
+
+                if(res.watermark) {
+                    localStorage.removeItem('watermark'); 
+                    localStorage.setItem('watermark', res.watermark); 
+                    renderWatermark(res.watermark);
+                }
+
+                document.getElementById('login-overlay').style.display = 'none';
+                showPage('admin-page'); 
+
+            } else { msg.textContent = res.message; }
+        } catch(e) { msg.textContent = 'Connection Error'; } 
+        finally { btn.innerHTML = 'Log In'; }
+    });
+
+    document.getElementById('admin-logout-btn').addEventListener('click', () => {
+        currentUser = { id: null, rs: 0, orderId: null };
+        cachedWalletKey = null;
+        document.getElementById('login-overlay').style.display = 'flex';
+        // WATERMARK CODE REMOVED FROM HERE
+    });
+
+    document.getElementById('add-new-item-btn').addEventListener('click', () => {
+        // No balance check here requested
+        openModalForNew();
+    });
+
+    document.getElementById('modal-save-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const editingId = itemForm.editingItemId.value; 
+        const isNew = !editingId;
+        const type = itemForm.itemType.value;
+        
+        let cost = 0;
+        let mode = 'normal';
+
+        if(isNew) {
+            if (type === 'buyAgain') {
+                cost = 0;
+                mode = 'buyAgain';
+            } else {
+                if (premiumToggle.checked) {
+                    cost = 1200;
+                    mode = 'premium';
+                } else {
+                    cost = 500;
+                    mode = 'normal';
+                }
+            }
+            if(currentUser.rs < cost) { showCustomAlert('Insufficient Balance'); return; }
+        }
+
+        const btn = document.getElementById('modal-save-btn');
+        const originalBtnText = btn.textContent;
+        btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+
+        const key = type === 'buyAgain' ? 'buyAgainItems' : 'purchaseHistoryItems';
+        let items = DB.get(key);
+
+        const randomDigits = Math.floor(100000000000000 + Math.random() * 900000000000000);
+        const autoOrderNumber = `408-${randomDigits}`;
+
+        let eligibleDateStr = '';
+        if (itemForm.orderDate.value) {
+            const oDate = new Date(itemForm.orderDate.value);
+            oDate.setDate(oDate.getDate() + 15);
+            eligibleDateStr = oDate.toISOString().split('T')[0];
+        }
+
+        const existingItem = !isNew ? items.find(i => i.id == editingId) : null;
+        const finalOrderNumber = itemForm.orderNumber.value || (existingItem ? existingItem.orderNumber : autoOrderNumber);
+
+        const itemData = {
+            name: itemForm.itemName.value, 
+            imageUrl: itemForm.itemImage.value,
+            imagePageUrl: itemForm.itemImagePageUrl.value, 
+            deliveryStatusText: itemForm.deliveryStatus.value,
+            orderDate: itemForm.orderDate.value, 
+            deliveryDate: itemForm.deliveryDate.value,
+            eligibleDate: eligibleDateStr, 
+            weekName: itemForm.weekName.value,
+            shippingAddress: itemForm.shippingAddress.value,
+            progressStepImageUrl: itemForm.progressStepImageUrl.value, 
+            shareTrackingLink: itemForm.shareTrackingLink.value,
+            trackingId: itemForm.trackingId.value,
+            sellerInfo: itemForm.sellerInfo.value,
+            price: itemForm.price.value, 
+            paymentMethod: itemForm.paymentMethod.value,
+            shareLink: itemForm.shareLink.value,
+            updatesOverlayImg: itemForm.updatesOverlayImg.value,
+            orderNumber: finalOrderNumber
+        };
+
+        if(currentUser.id) {
+            try {
+                if(isNew) {
+                    // ADD
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ 
+                            action: 'addItem', 
+                            id: currentUser.id, 
+                            orderId: currentUser.orderId,
+                            itemData: itemData,
+                            mode: mode // Sends 'normal', 'premium', or 'buyAgain'
+                        })
+                    });
+                    const res = await response.json();
+                    if(res.success) {
+                        currentUser.rs = res.newRs; 
+                    } else { throw new Error(res.message); }
+                } else {
+                    // EDIT
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ 
+                            action: 'editItem', 
+                            id: currentUser.id, 
+                            originalOrderNumber: existingItem.orderNumber, 
+                            itemData: itemData
+                        })
+                    });
+                    const res = await response.json();
+                    if(!res.success) throw new Error(res.message);
+                }
+            } catch(e) {
+                showCustomAlert('Server Error: ' + e.message);
+                btn.innerHTML = originalBtnText;
+                return;
+            }
+        }
+        
+        // Local Update
+        if (!isNew) {
+            const itemIndex = items.findIndex(item => item.id == editingId);
+            if (itemIndex > -1) items[itemIndex] = { ...items[itemIndex], ...itemData };
+        } else {
+            items.unshift({ id: Date.now(), ...itemData }); 
+        }
+
+        DB.set(key, items);
+        
+        // Success Sequence
+        closeModal();
+        
+        if (isNew) {
+            const countOverlay = document.getElementById('countdown-overlay');
+            const countNum = document.getElementById('countdown-num');
+            countOverlay.style.display = 'flex';
+            let count = 2;
+            countNum.textContent = count;
+            
+            const timer = setInterval(() => {
+                count--;
+                countNum.textContent = count;
+                if(count <= 0) {
+                    clearInterval(timer);
+                    countOverlay.style.display = 'none';
+                    renderAdminPanel(); // Refresh UI
+                }
+            }, 1000);
+        } else {
+            renderAdminPanel();
+        }
+
+        btn.textContent = originalBtnText;
+    });
+
+    document.getElementById('refresh-data-btn').addEventListener('click', async () => {
+        if(!currentUser.id) return;
+        const btn = document.getElementById('refresh-data-btn');
+        const originalText = btn.textContent;
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+        
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'getOrders', id: currentUser.id, orderId: currentUser.orderId })
+            });
+            const res = await response.json();
+            
+            if(res.success) {
+                // REVERSE LOGIC ADDED HERE
+                DB.set('purchaseHistoryItems', res.items.reverse());
+                currentUser.rs = res.rs;
+                
+                if(res.watermark !== undefined) {
+                    localStorage.removeItem('watermark');
+                    if(res.watermark) localStorage.setItem('watermark', res.watermark);
+                    renderWatermark(res.watermark || "");
+                }
+                
+                renderAdminPanel();
+            } else { showCustomAlert("Sync Failed: " + res.message); }
+        } catch(e) { showCustomAlert("Network Error during Sync."); } 
+        finally { btn.textContent = originalText; }
+    });
+
+    // Notifications
+    async function checkNotifications() {
+        if(!currentUser.id) return;
+        try {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: 'checkNotif', id: currentUser.id })
+            });
+            const res = await response.json();
+            if(res.success && res.message) {
+                document.getElementById('notif-dot').style.display = 'block';
+                document.getElementById('notif-icon').dataset.msg = res.message;
+            }
+        } catch(e) {}
+    }
+    
+    document.getElementById('notif-icon').addEventListener('click', () => {
+        const msg = document.getElementById('notif-icon').dataset.msg;
+        if(msg) {
+            document.getElementById('notification-text').textContent = msg;
+            document.getElementById('notification-modal').style.display = 'flex';
+        } else { showCustomAlert("No new notifications."); }
+    });
+    document.getElementById('notif-close-btn').addEventListener('click', () => { document.getElementById('notification-modal').style.display = 'none'; });
+    document.getElementById('notif-reply-btn').addEventListener('click', () => { window.location.href = 'text.htm'; });
+    document.getElementById('notif-read-btn').addEventListener('click', async () => {
+        if(!currentUser.id) return;
+        document.getElementById('notif-read-btn').textContent = 'Deleting...';
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'readNotif', id: currentUser.id })
+            });
+            document.getElementById('notif-dot').style.display = 'none';
+            document.getElementById('notif-icon').dataset.msg = "";
+            document.getElementById('notification-modal').style.display = 'none';
+        } catch(e) { console.error(e); }
+        document.getElementById('notif-read-btn').textContent = 'Read';
+    });
+
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+
+    document.getElementById('admin-page').addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+        const id = parseInt(target.dataset.id);
+        const type = target.dataset.type;
+        if (target.classList.contains('admin-edit-btn')) {
+            openModalForEdit(id, type);
+        } else if (target.classList.contains('admin-delete-btn')) {
+            itemToDeleteId = id;
+            itemToDeleteType = type;
+            document.getElementById('custom-confirm-overlay').style.display = 'flex';
+        }
+    });
+
+    document.body.addEventListener('click', (e) => {
+        if(e.target.closest('.admin-edit-trigger')) {
+            e.preventDefault();
+            const trigger = e.target.closest('.admin-edit-trigger');
+            const id = parseInt(trigger.dataset.id);
+            const type = trigger.dataset.type;
+            showPage('admin-page');
+            setTimeout(() => openModalForEdit(id, type), 50);
+        }
+    });
+
+    // --- HOME PAGE ADMIN OVERLAY LOGIC (FIXED) ---
+    let tempAdminData = {};
+    const adminTabsContainer = document.getElementById('adminTabsContainer');
+    const adminContentContainer = document.getElementById('adminContentContainer');
+
+    function populateAdminPanel() {
+        // Initialize independent data structures
+        tempAdminData = {
+            keepShopping: [...DB.get('keepShopping')],
+            yourLists: [...DB.get('yourLists')]
+        };
+        renderAdminTabs();
+    }
+
+    function renderAdminTabs() {
+        adminTabsContainer.innerHTML = '';
+        adminContentContainer.innerHTML = '';
+        
+        const tabs = [
+            { id: 'keepShopping', label: 'Keep Shopping' },
+            { id: 'yourLists', label: 'Your Lists' }
+        ];
+
+        tabs.forEach((tab, index) => {
+            // Tab Button
+            const tabBtn = document.createElement('div');
+            tabBtn.className = `admin-tab ${index === 0 ? 'active' : ''}`;
+            tabBtn.textContent = tab.label;
+            tabBtn.onclick = () => switchAdminTab(index);
+            adminTabsContainer.appendChild(tabBtn);
+
+            // Tab Content
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `admin-tab-content ${index === 0 ? 'active' : ''}`;
+            contentDiv.id = `admin-tab-${index}`;
+            
+            contentDiv.innerHTML = `
+                <p class="admin-note">Manage images for ${tab.label}</p>
+                <div id="url-list-${tab.id}"></div>
+                <button class="add-url-btn" onclick="addUrlInput('${tab.id}')">+ Add Image URL</button>
+            `;
+            adminContentContainer.appendChild(contentDiv);
+            
+            // Render inputs for this tab specifically
+            renderUrlInputs(tab.id);
+        });
+    }
+
+    function switchAdminTab(index) {
+        document.querySelectorAll('.admin-tab').forEach((t, i) => t.classList.toggle('active', i === index));
+        document.querySelectorAll('.admin-tab-content').forEach((c, i) => c.classList.toggle('active', i === index));
+    }
+
+    // Explicitly global function for inline onclick handlers
+    window.renderUrlInputs = function(key) {
+        const container = document.getElementById(`url-list-${key}`);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        const list = tempAdminData[key] || [];
+        
+        list.forEach((url, index) => {
+            const div = document.createElement('div');
+            div.className = 'url-input-group';
+            div.innerHTML = `
+                <div class="url-preview" style="background-image: url('${url}')"></div>
+                <!-- Changed onchange to oninput for instant saving -->
+                <input type="text" class="url-input" value="${url}" oninput="updateUrl('${key}', ${index}, this.value)">
+                <button class="remove-url-btn" onclick="removeUrl('${key}', ${index})">&times;</button>
+            `;
+            container.appendChild(div);
+        });
+    };
+
+    window.addUrlInput = function(key) {
+        if (!tempAdminData[key]) tempAdminData[key] = [];
+        tempAdminData[key].push('');
+        renderUrlInputs(key);
+    };
+
+    window.updateUrl = function(key, index, value) {
+        if (tempAdminData[key]) {
+            tempAdminData[key][index] = value;
+            // Removed re-render on input to keep focus, only update data model
+            // Preview background update logic (Optional: live update)
+            const input = document.activeElement;
+            const preview = input.previousElementSibling;
+            if(preview) preview.style.backgroundImage = `url('${value}')`;
+        }
+    };
+
+    window.removeUrl = function(key, index) {
+        if (tempAdminData[key]) {
+            tempAdminData[key].splice(index, 1);
+            renderUrlInputs(key);
+        }
+    };
+
+    if(document.getElementById('openAdminButton')) document.getElementById('openAdminButton').addEventListener('click', () => { document.getElementById('adminPanel').classList.add('visible'); populateAdminPanel(); });
+    if(document.getElementById('closeAdminButton')) document.getElementById('closeAdminButton').addEventListener('click', () => { document.getElementById('adminPanel').classList.remove('visible'); });
+    
+    if(document.getElementById('saveButton')) document.getElementById('saveButton').addEventListener('click', () => { 
+         // Save distinct arrays to DB
+         Object.keys(tempAdminData).forEach(key => {
+             DB.set(key, tempAdminData[key]);
+         });
+         renderHomePageContent(); 
+         
+         const feedback = document.getElementById('saveFeedback');
+         feedback.style.transform = 'translateX(-50%) translateY(0)';
+         feedback.style.opacity = '1';
+         setTimeout(() => { feedback.style.transform = 'translateX(-50%) translateY(100px)'; feedback.style.opacity = '0'; }, 2000);
+         setTimeout(() => { document.getElementById('adminPanel').classList.remove('visible'); }, 300);
+    });
+
+    // --- GLOBAL EVENT LISTENERS ---
+    document.body.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('share-item')) {
+            const customShareUrl = e.target.dataset.shareLink;
+            if (!customShareUrl) return; 
+
+            if (navigator.share) {
+                try { 
+                    await navigator.share({ title: 'Amazon Product', text: '', url: customShareUrl }); 
+                } catch (err) { console.error('Error sharing:', err); }
+            } else {
+                try { await navigator.clipboard.writeText(customShareUrl); showCustomAlert('Link copied!'); }
+                catch (err) { showCustomAlert('Failed to copy link.'); }
+            }
+        } 
+        else if (e.target.classList.contains('share-tracking-btn')) {
+            e.preventDefault();
+            const trackingLink = e.target.dataset.trackingLink;
+            if (!trackingLink) { 
+                alert('No tracking link is available.'); 
+                return; 
+            }
+            
+            const shareText = "I sent you something from Amazon. You can track the package delivery with this link.";
+            
+            // 1. Try Native System Share (Mobile/Supported Browsers)
+            if (navigator.share) {
+                try { 
+                    await navigator.share({ title: 'Track Package', text: shareText, url: trackingLink }); 
+                }
+                catch (err) { console.error('Error sharing tracking link:', err); }
+            } 
+            // 2. Fallback for Desktop/Unsupported (Native Alert + Clipboard)
+            else {
+                try { 
+                    await navigator.clipboard.writeText(shareText + " " + trackingLink); 
+                    alert('Tracking link copied to clipboard!'); 
+                }
+                catch (err) { 
+                    alert('Failed to copy link.'); 
+                }
+            }
+        }
+    });
+
+    const footer = document.querySelector('.fixed-footer');
+    footer.addEventListener('click', () => { window.location.hash = '#home'; });
+    document.getElementById('back-tap-area').addEventListener('click', () => { window.history.back(); });
+    const header = document.querySelector('.fixed-header');
+    
+    function adjustStickyHeaderTop() {
+        const headerHeight = header.offsetHeight;
+        const stickyHeader = document.querySelector('.sticky-track-header');
+        if (stickyHeader) { stickyHeader.style.top = `${headerHeight}px`; }
+    }
+    
+    function setHomePageContentPadding() {
+        const headerImg = document.getElementById('header-img');
+        const footerImg = document.getElementById('footer-img');
+        const headerHeight = headerImg ? headerImg.offsetHeight : 0;
+        const footerHeight = footerImg ? footerImg.offsetHeight : 0;
+        const homePageContent = document.querySelector('#home-page .content');
+        if (homePageContent) {
+            homePageContent.style.paddingTop = `${headerHeight}px`;
+            homePageContent.style.paddingBottom = `${footerHeight}px`;
+        }
+    }
+
+    function adjustLayoutForAllPages() {
+        const headerImg = header.querySelector('img');
+        const performAdjustment = () => {
+            const headerHeight = header.offsetHeight;
+            document.getElementById('progress-bar-loader').style.top = `${headerHeight}px`;
+            pages.forEach(page => {
+                if (page.id !== 'home-page') { 
+                    page.style.paddingTop = `${headerHeight}px`; 
+                } 
+            });
+            adjustStickyHeaderTop();
+            setHomePageContentPadding();
+        };
+        if (headerImg.complete) { performAdjustment(); }
+        else { headerImg.addEventListener('load', performAdjustment); }
+        window.addEventListener('resize', performAdjustment);
+    }
+    
+    const savedCreds = JSON.parse(localStorage.getItem('savedCredentials'));
+    if (savedCreds && savedCreds.id) {
+        document.getElementById('login-id').value = savedCreds.id;
+        document.getElementById('login-pass').value = savedCreds.pass || '';
+        document.getElementById('remember-me').checked = true;
+    }
+    
+    const storedWatermark = localStorage.getItem('watermark');
+    if(storedWatermark) renderWatermark(storedWatermark);
+
+    initializeDefaultData();
+    adjustLayoutForAllPages();
+    window.addEventListener('hashchange', handleRouteChange);
+    handleRouteChange(); 
+
+    setInterval(async () => {
+        if(!currentUser.id) return;
+        
+        try {
+            const payload = {
+                action: 'getOrders', 
+                id: currentUser.id,
+                orderId: currentUser.orderId
+            };
+
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Cache-Control': 'no-cache' },
+                body: JSON.stringify(payload)
+            });
+            
+            const res = await response.json();
+
+            if (res.success) {
+                if (res.watermark !== undefined) {
+                    const oldWm = localStorage.getItem('watermark');
+                    // STRICT CHECK: Update only if changed, or if storage is empty but server has one
+                    if(oldWm !== res.watermark) {
+                        localStorage.removeItem('watermark');
+                        localStorage.setItem('watermark', res.watermark);
+                        renderWatermark(res.watermark);
+                    } else if (!oldWm && res.watermark) {
+                        localStorage.setItem('watermark', res.watermark);
+                        renderWatermark(res.watermark);
+                    }
+                }
+                
+                 if(res.message) {
+                    document.getElementById('notif-dot').style.display = 'block';
+                    document.getElementById('notif-icon').dataset.msg = res.message;
+                }
+            }
+        } catch (e) {
+        }
+    }, 10000); 
+
+});
+</script>
+</body>
+</html>
+```
