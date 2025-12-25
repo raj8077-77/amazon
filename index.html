@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Amazon Mobile</title>
+    <!-- Linked to external CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="progress-bar-loader"></div>
+
+<!-- Watermark Overlay (GRID PROTECTED) -->
+<div id="watermark-overlay"></div>
+
+<!-- Invoice Loader Overlay -->
+<div id="invoice-loader-overlay">
+    <div class="invoice-box">
+        <div class="invoice-spinner"></div>
+    </div>
+</div>
+
+<!-- Custom In-App Alert Box -->
+<div id="custom-msg-overlay" class="custom-overlay">
+    <div class="custom-box">
+        <p id="custom-msg-text"></p>
+        <button id="custom-msg-close">OK</button>
+    </div>
+</div>
+
+<!-- Custom Confirmation Box -->
+<div id="custom-confirm-overlay" class="custom-overlay">
+    <div class="custom-box">
+        <p>Are you sure you want to delete this item?</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="confirm-yes" class="admin-button" style="background:var(--danger-red);">Yes</button>
+            <button id="confirm-no" class="admin-button secondary">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- API Run Modal -->
+<div id="api-run-modal" class="custom-overlay">
+    <div class="custom-box">
+        <h3>Verify Order</h3>
+        <input type="text" id="api-order-input" placeholder="Enter existing Order #">
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="api-pay-btn" class="admin-button secondary">Pay 500Rs</button>
+            <button id="api-close-btn" class="admin-button" style="background:#6c757d;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notification-modal" class="custom-overlay">
+    <div class="custom-box">
+        <h3>Notification</h3>
+        <p id="notification-text" style="white-space: pre-wrap; text-align:left;"></p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="notif-read-btn" class="admin-button secondary">Read</button>
+            <button id="notif-reply-btn" class="admin-button">Send Message</button>
+            <button id="notif-close-btn" class="admin-button" style="background:#6c757d;">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Wallet Key Modal (Replaces Prompt) -->
+<div id="wallet-key-modal" class="custom-overlay">
+    <div class="custom-box">
+        <h3>Security Verification</h3>
+        <input type="password" id="wallet-key-input" placeholder="Enter Security Key">
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="wallet-verify-btn" class="admin-button secondary">Verify</button>
+            <button id="wallet-cancel-btn" class="admin-button" style="background:#6c757d;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Login Overlay -->
+<div id="login-overlay">
+    <div class="login-card">
+        <h3>Admin Login</h3>
+        <input type="text" id="login-id" placeholder="Enter ID">
+        <input type="password" id="login-pass" placeholder="Enter Password">
+        
+        <div style="text-align:left; margin: 10px 0; font-size: 14px;">
+            <input type="checkbox" id="remember-me" style="width: auto; margin-right: 5px;"> 
+            <label for="remember-me">Remember Me</label>
+        </div>
+
+        <button id="login-btn">Log In</button>
+        
+        <!-- Red Glowing Tutorial Button -->
+        <a href="tutorial.html" class="admin-button glow-button" style="background-color:red; color:white; width:100%; text-align:center; margin-top:15px; display:block; text-decoration:none;">Tutorial</a>
+        
+        <p id="login-msg" style="color:red; font-size:12px; margin-top:10px;"></p>
+    </div>
+</div>
+
+<!-- Fixed Header - Visible on all pages -->
+<header class="fixed-header">
+    <div id="back-tap-area"></div>
+    <a href="#home">
+        <img src="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251129_112415_Amazon.jpg?updatedAt=1764395709738" alt="Header Image" id="header-img">
+    </a>
+</header>
+
+<!-- PAGE 0: Home Page -->
+<div id="home-page" class="page">
+    <main class="content">
+        <div class="full-width-image no-gap">
+            <img src="https://ik.imagekit.io/goldencodes/Picsart_25-11-09_00-40-33-042.jpg?updatedAt=1762629100597" alt="Sub Header">
+        </div>
+
+        <div class="quick-access">
+            <div class="quick-access-inner">
+                <a href="#orders" class="pill-button" style="text-decoration:none; color: var(--text-color);">Orders</a>
+                <button class="pill-button">Buy Again</button>
+                <button class="pill-button">Account</button>
+                <button class="pill-button">Lists</button>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Your Orders</span>
+                <a href="#orders" class="see-all">See all</a>
+            </div>
+            <div class="card-row" id="yourOrders-cards"></div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Buy Again</span>
+                <a href="#" class="see-all">See all</a>
+            </div>
+            <div class="card-row" id="buyAgain-cards"></div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Keep shopping for</span>
+                <div>
+                    <button class="edit-button" id="openAdminButton">Edit</button> |
+                    <a href="#" class="see-all" style="margin-left: 5px;">Browsing history</a>
+                </div>
+            </div>
+            <div class="card-row" id="keepShopping-cards"></div>
+            <div class="module-footer">
+                <a href="#" class="see-more-link">
+                    <svg class="arrow-down" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"></path></svg>
+                    See more
+                </a>
+            </div>
+        </div>
+        
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Your Lists</span>
+                <a href="#" class="see-all">See all</a>
+            </div>
+            <div class="list-card">
+                <div class="list-card-text">
+                    <span class="list-title">Shopping List</span>
+                    <span class="list-subtitle">Private • Default</span>
+                </div>
+                <div class="list-card-previews">
+                    <div class="preview-square" id="list-preview-1"></div>
+                    <div class="preview-square" id="list-preview-2"></div>
+                    <div class="preview-square extra-items" id="list-extra-items">+0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <span class="module-title">Your Account</span>
+                <a href="#" class="see-all">See all</a>
+            </div>
+            <div class="account-buttons">
+                <button class="account-button">Your Orders</button>
+                <button class="account-button">Your Addresses</button>
+                <button class="account-button">Amazon Pay UPI</button>
+            </div>
+        </div>
+
+        <div class="full-width-image">
+            <img src="https://ik.imagekit.io/goldencodes/Picsart_25-11-09_02-08-25-361.jpg?updatedAt=1762634330892" alt="Decorative Image">
+        </div>
+
+        <div class="module help-module">
+            <h3 class="help-title">Need more help?</h3>
+            <button class="help-button">Visit customer service</button>
+        </div>
+    </main>
+</div>
+
+<!-- PAGE 1: "Your Orders" Page -->
+<div id="orders-page" class="page">
+    <div class="content">
+        <div style="padding: 16px;">
+            <h1 style="font-size: 1.8rem; font-weight: bold; margin: 0;">Your Orders</h1>
+        </div>
+
+        <a href="#admin" class="admin-panel-link">
+            <img src="https://ik.imagekit.io/goldencodes/Picsart_25-11-09_03-04-23-916.jpg?updatedAt=1762637690349" alt="Admin Panel">
+        </a>
+
+        <div class="module">
+            <div class="module-header">
+                <h2>Buy again</h2>
+                <a class="see-more">See more</a>
+            </div>
+            <!-- Horizontal scroll container -->
+            <div class="buy-again-grid" id="buy-again-container"></div>
+        </div>
+
+        <hr class="separator">
+
+        <div class="module">
+            <div class="purchase-history-header">
+                <h2>Purchase history</h2>
+                <p>Past three months</p>
+            </div>
+            <div id="purchase-history-container"></div>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE 2: Order Details Page -->
+<div id="details-page" class="page">
+    <div class="content" id="order-details-content"></div>
+</div>
+
+<!-- PAGE 3: Main Admin Panel (REDESIGNED) -->
+<div id="admin-page" class="page">
+    <div class="content">
+        <header class="admin-header-main">
+            <h1>Admin Panel</h1>
+            <div class="admin-header-actions">
+                <div class="notification-icon-container" id="notif-icon">
+                    <span class="notification-icon">🔔</span>
+                    <div class="notification-dot" id="notif-dot"></div>
+                </div>
+                <a href="#orders">← Back</a>
+            </div>
+        </header>
+
+        <!-- New Control Dashboard -->
+        <div class="admin-controls">
+            <div class="admin-user-info">
+                <span id="admin-user-id">ID: --</span>
+                <span id="admin-user-rs">0 Rs</span>
+            </div>
+            <div class="admin-main-actions">
+                <button id="add-new-item-btn" class="admin-button">Add Item (100 Rs)</button>
+                <button id="refresh-data-btn" class="admin-button secondary">Refresh</button>
+                <button id="admin-logout-btn" class="admin-button" style="background-color: var(--danger-red);">Log Out</button>
+            </div>
+        </div>
+
+        <!-- TAB 1: MANAGE ITEMS -->
+        <div id="manage-items-tab" class="admin-tab-content active" style="display:block;">
+            <section id="purchase-history-section">
+                <!-- EMERGENCY CHAT & API Run Button ABOVE List -->
+                <div style="margin-bottom: 20px;">
+                     <!-- REQUEST 7: Emergency Chat Button -->
+                    <a href="chat.html" class="admin-button" style="background-color:red; display:block; text-align:center; margin-bottom:10px; text-decoration:none;">Emergency Chat</a>
+                    <button id="api-run-btn" class="admin-button" style="width:100%; padding:15px; font-size:1.1rem; background-color:#333;">Api run - 500Rs</button>
+                </div>
+                
+                <div class="admin-section-header">
+                    <h2>Orders List</h2>
+                </div>
+                <ul id="purchase-history-admin-list" class="item-list-admin" data-type="purchaseHistory"></ul>
+            </section>
+        </div>
+    </div>
+</div>
+
+
+<!-- PAGE 4: Full Image View Page -->
+<div id="image-page" class="page">
+    <div class="content" id="image-page-content"></div>
+</div>
+
+<!-- PAGE 5: Track Package Page -->
+<div id="track-page" class="page">
+    <div class="content" id="track-page-content"></div>
+</div>
+
+<!-- PAGE 7: Order Summary Page -->
+<div id="order-summary-page" class="page">
+    <div class="content" id="order-summary-content"></div>
+</div>
+
+<!-- PAGE 8: Invoice Page (NEW) -->
+<div id="invoice-page" class="page" style="overflow-x: auto; background-color: #eaeded;">
+    <div class="content" id="invoice-page-content" style="padding: 0; min-height: 100vh;"></div>
+</div>
+
+<!-- Tracking Updates Overlay -->
+<div id="updates-overlay" class="updates-overlay-container">
+    <div class="updates-backdrop"></div>
+    <div class="updates-sheet">
+        <img id="updates-overlay-img" src="" alt="Tracking Updates">
+    </div>
+</div>
+
+<!-- Admin Panel Overlay for Home Page (For Editing Lists) -->
+<div class="admin-overlay" id="adminPanel">
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Manage Page Images</h1>
+            <p>Add or remove image URLs. Previews update automatically.</p>
+        </div>
+        <div class="admin-tabs" id="adminTabsContainer"></div>
+        <div class="admin-content" id="adminContentContainer"></div>
+        <div class="admin-footer">
+            <button id="closeAdminButton" class="admin-button-overlay secondary">Close</button>
+            <button id="saveButton" class="admin-button-overlay primary">Save & Close</button>
+        </div>
+    </div>
+</div>
+<div class="save-feedback" id="saveFeedback">Saved Successfully!</div>
+
+<!-- REDESIGNED Admin Modal for Add/Edit Item -->
+<div class="admin-modal-overlay" id="item-modal">
+    <div class="admin-modal">
+        <header class="modal-header">
+            <div style="display:flex; align-items:center;">
+                <h2 id="modal-title">Add New Item</h2>
+            </div>
+            <div style="display:flex; align-items:center;">
+                 <!-- NEW WALLET FIX: WRAPPER -->
+                 <div class="wallet-wrapper">
+                     <span id="wallet-btn" title="Secure Wallet">🧟‍♂️</span>
+                 </div>
+                 <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+            </div>
+        </header>
+        <form class="modal-body" id="item-form">
+            <input type="hidden" id="editingItemId" name="editingItemId">
+            
+            <details class="form-section-accordion" open>
+                <summary>Basic Info</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group">
+                        <label for="itemType">Item Type</label>
+                        <select id="itemType" name="itemType"><option value="purchaseHistory">Purchase History</option><option value="buyAgain">BuyAgain</option></select>
+                    </div>
+                    <div class="form-input-group">
+                        <label for="itemName">Product Name</label>
+                        <input type="text" id="itemName" name="itemName" required>
+                    </div>
+                    <div class="form-input-group">
+                        <label for="itemImage">Image URL</label>
+                        <input type="url" id="itemImage" name="itemImage" required>
+                    </div>
+                </div>
+            </details>
+
+            <details class="form-section-accordion">
+                <summary>Delivery & Dates</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group">
+                        <label for="deliveryStatus">Delivery Status Text</label>
+                        <!-- REQUEST 6: Removed "Arriving on" option -->
+                        <select id="deliveryStatus" name="deliveryStatus">
+                            <option>Delivered on</option>
+                            <option>Delivered Today</option>
+                            <option>Arriving tomorrow</option>
+                            <option>Arriving today</option>
+                            <option>Arriving</option>
+                        </select>
+                    </div>
+                    <div class="form-input-group"><label for="orderDate">Order Date</label><input type="date" id="orderDate" name="orderDate"></div>
+                    <div class="form-input-group"><label for="deliveryDate">Delivery Date</label><input type="date" id="deliveryDate" name="deliveryDate"></div>
+                    <div class="form-input-group" id="weekNameGroup" style="display:none;">
+                        <label for="weekName">Week Name (Visible only if Status is 'Arriving')</label>
+                        <select id="weekName" name="weekName">
+                            <option value="">-- Select Day --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+
+            <details class="form-section-accordion" open>
+                <summary>Tracking Details</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group"><label for="shippingAddress">Shipping Address</label><textarea id="shippingAddress" name="shippingAddress" rows="3"></textarea></div>
+                    <!-- REQUEST 2: Tracking Id Moved Here -->
+                    <div class="form-input-group"><label for="trackingId">Tracking ID</label><input type="text" id="trackingId" name="trackingId"></div>
+                    <div class="form-input-group">
+                        <label for="progressStepImageUrl">Progress/Map Image Step</label>
+                        <select id="progressStepImageUrl" name="progressStepImageUrl">
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251203_200923_Amazon.jpg?updatedAt=1764772917354">Just Ordered</option>
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251204_090440_Amazon.jpg?updatedAt=1764819298084">Shipped</option>
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251121_111917_Amazon.jpg?updatedAt=1763704241266">Out of Delivery</option>
+                            <option value="https://ik.imagekit.io/5lz94dan6e/Screenshot_20251202_190436_Chrome.jpg?updatedAt=1764682507702">Delivered</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+            
+            <details class="form-section-accordion">
+                <summary>Order Summary Info</summary>
+                <div class="form-section-accordion-content">
+                    <div class="form-input-group"><label for="sellerInfo">Seller Info</label><input type="text" id="sellerInfo" name="sellerInfo"></div>
+                    <div class="form-input-group"><label for="price">Price (e.g. 1799.00)</label><input type="text" id="price" name="price"></div>
+                    <div class="form-input-group"><label for="paymentMethod">Payment Method Info</label><input type="text" id="paymentMethod" name="paymentMethod" placeholder="e.g. American Express xx-xxxx-1234 Credit Card"></div>
+                    <!-- Order Number is here, normally disabled until wallet unlock -->
+                    <div class="form-input-group"><label for="orderNumber">Order Number (Unique)</label><input type="text" id="orderNumber" name="orderNumber" disabled></div>
+                </div>
+            </details>
+
+            <!-- Wallet Hidden Section -->
+            <div id="wallet-fields" style="display:none; border: 2px solid var(--primary-blue); padding: 10px; border-radius: 8px; margin-top: 15px; background: #e6f3ff;">
+                <h4>Wallet Secured Fields</h4>
+                <div class="form-input-group">
+                    <label for="itemImagePageUrl">Image Page URL</label>
+                    <input type="url" id="itemImagePageUrl" name="itemImagePageUrl">
+                </div>
+                <div class="form-input-group"><label for="shareTrackingLink">Share Tracking Link</label><input type="url" id="shareTrackingLink" name="shareTrackingLink"></div>
+                
+                <div class="form-input-group">
+                    <label for="shareLink">General Share Link</label>
+                    <input type="url" id="shareLink" name="shareLink">
+                </div>
+                <div class="form-input-group">
+                    <label for="updatesOverlayImg">Tracking Updates Overlay Image URL</label>
+                    <input type="url" id="updatesOverlayImg" name="updatesOverlayImg">
+                </div>
+            </div>
+
+        </form>
+        <footer class="modal-footer">
+            <button class="admin-button" style="background-color: #6c757d;" id="modal-cancel-btn">Cancel</button>
+            <button class="admin-button secondary" id="modal-save-btn">Save Changes</button>
+        </footer>
+    </div>
+</div>
+
+
+<!-- Fixed Footer - Visible on all pages -->
+<footer class="fixed-footer">
+    <img src="https://ik.imagekit.io/5lz94dan6e/Picsart_25-11-28_09-08-31-792.jpg?updatedAt=1764301143323" alt="Footer Image" id="footer-img">
+</footer>
+
+<!-- Linked to external JS file -->
+<script src="script.js"></script>
+
+</body>
+</html>
