@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Amazon Mobile</title>
-    <!-- Linked to external CSS file -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -32,7 +31,7 @@
 <!-- Custom Confirmation Box -->
 <div id="custom-confirm-overlay" class="custom-overlay">
     <div class="custom-box">
-        <p>delete this message?</p>
+        <p>Are you sure you want to delete this item?</p>
         <div style="display:flex; gap:10px; justify-content:center;">
             <button id="confirm-yes" class="admin-button" style="background:var(--danger-red);">Yes</button>
             <button id="confirm-no" class="admin-button secondary">No</button>
@@ -40,13 +39,13 @@
     </div>
 </div>
 
-<!-- API Run Modal -->
+<!-- API Run Modal (Only used for legacy check if needed, button removed from admin) -->
 <div id="api-run-modal" class="custom-overlay">
     <div class="custom-box">
         <h3>Verify Order</h3>
         <input type="text" id="api-order-input" placeholder="Enter existing Order #">
         <div style="display:flex; gap:10px; justify-content:center;">
-            <button id="api-pay-btn" class="admin-button secondary">Pay 650Rs</button>
+            <button id="api-pay-btn" class="admin-button secondary">Pay 500Rs</button>
             <button id="api-close-btn" class="admin-button" style="background:#6c757d;">Cancel</button>
         </div>
     </div>
@@ -60,16 +59,22 @@
         <div style="display:flex; gap:10px; justify-content:center;">
             <button id="notif-read-btn" class="admin-button secondary">Read</button>
             <button id="notif-reply-btn" class="admin-button">Send Message</button>
-            <button id="notif-close-btn" class="admin-button" style="background:#6c757d;">CLose</button>
+            <button id="notif-close-btn" class="admin-button" style="background:#6c757d;">Close</button>
         </div>
     </div>
 </div>
 
-<!-- Wallet Key Modal (Replaces Prompt) -->
+<!-- Wallet Key Modal -->
 <div id="wallet-key-modal" class="custom-overlay">
     <div class="custom-box">
         <h3>Security Verification</h3>
         <input type="password" id="wallet-key-input" placeholder="Enter Security Key">
+        
+        <div style="text-align:left; margin: 10px 0; font-size: 14px;">
+            <input type="checkbox" id="wallet-remember-me" style="width: auto; margin-right: 5px;"> 
+            <label for="wallet-remember-me">Remember Me</label>
+        </div>
+
         <div style="display:flex; gap:10px; justify-content:center;">
             <button id="wallet-verify-btn" class="admin-button secondary">Verify</button>
             <button id="wallet-cancel-btn" class="admin-button" style="background:#6c757d;">Cancel</button>
@@ -77,11 +82,17 @@
     </div>
 </div>
 
-<!-- Login Overlay -->
+<!-- Login Overlay (DEVICE ID LOCKED) -->
 <div id="login-overlay">
     <div class="login-card">
-        <h3>Admin Login</h3>
-        <input type="text" id="login-id" placeholder="Enter ID">
+        <h3>Device Authorization</h3>
+        
+        <!-- Device ID Display Row -->
+        <div class="device-id-row">
+            <input type="text" id="login-device-id" readonly title="Your Device ID">
+            <button id="copy-device-btn" title="Copy Device ID">📋</button>
+        </div>
+        
         <input type="password" id="login-pass" placeholder="Enter Password">
         
         <div style="text-align:left; margin: 10px 0; font-size: 14px;">
@@ -91,14 +102,13 @@
 
         <button id="login-btn">Log In</button>
         
-        <!-- Red Glowing Tutorial Button -->
         <a href="tutorial.html" class="admin-button glow-button" style="background-color:red; color:white; width:100%; text-align:center; margin-top:15px; display:block; text-decoration:none;">Tutorial</a>
         
         <p id="login-msg" style="color:red; font-size:12px; margin-top:10px;"></p>
     </div>
 </div>
 
-<!-- Fixed Header - Visible on all pages -->
+<!-- Fixed Header -->
 <header class="fixed-header">
     <div id="back-tap-area"></div>
     <a href="#home">
@@ -212,7 +222,6 @@
                 <h2>Buy again</h2>
                 <a class="see-more">See more</a>
             </div>
-            <!-- Horizontal scroll container -->
             <div class="buy-again-grid" id="buy-again-container"></div>
         </div>
 
@@ -233,7 +242,7 @@
     <div class="content" id="order-details-content"></div>
 </div>
 
-<!-- PAGE 3: Main Admin Panel (REDESIGNED) -->
+<!-- PAGE 3: Main Admin Panel -->
 <div id="admin-page" class="page">
     <div class="content">
         <header class="admin-header-main">
@@ -247,27 +256,22 @@
             </div>
         </header>
 
-        <!-- New Control Dashboard -->
         <div class="admin-controls">
             <div class="admin-user-info">
                 <span id="admin-user-id">ID: --</span>
                 <span id="admin-user-rs">0 Rs</span>
             </div>
             <div class="admin-main-actions">
-                <button id="add-new-item-btn" class="admin-button">Add Item (500 Rs)</button>
+                <button id="add-new-item-btn" class="admin-button">Add Product</button>
                 <button id="refresh-data-btn" class="admin-button secondary">Refresh</button>
                 <button id="admin-logout-btn" class="admin-button" style="background-color: var(--danger-red);">Log Out</button>
             </div>
         </div>
 
-        <!-- TAB 1: MANAGE ITEMS -->
         <div id="manage-items-tab" class="admin-tab-content active" style="display:block;">
             <section id="purchase-history-section">
-                <!-- EMERGENCY CHAT & API Run Button ABOVE List -->
                 <div style="margin-bottom: 20px;">
-                     <!-- REQUEST 7: Emergency Chat Button -->
                     <a href="chat.html" class="admin-button" style="background-color:red; display:block; text-align:center; margin-bottom:10px; text-decoration:none;">Emergency Chat</a>
-                    <button id="api-run-btn" class="admin-button" style="width:100%; padding:15px; font-size:1.1rem; background-color:#333;">Api run - 500Rs</button>
                 </div>
                 
                 <div class="admin-section-header">
@@ -278,7 +282,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- PAGE 4: Full Image View Page -->
 <div id="image-page" class="page">
@@ -295,7 +298,7 @@
     <div class="content" id="order-summary-content"></div>
 </div>
 
-<!-- PAGE 8: Invoice Page (NEW) -->
+<!-- PAGE 8: Invoice Page -->
 <div id="invoice-page" class="page" style="overflow-x: auto; background-color: #eaeded;">
     <div class="content" id="invoice-page-content" style="padding: 0; min-height: 100vh;"></div>
 </div>
@@ -308,7 +311,7 @@
     </div>
 </div>
 
-<!-- Admin Panel Overlay for Home Page (For Editing Lists) -->
+<!-- Admin Panel Overlay for Home Page -->
 <div class="admin-overlay" id="adminPanel">
     <div class="admin-container">
         <div class="admin-header">
@@ -333,9 +336,8 @@
                 <h2 id="modal-title">Add New Item</h2>
             </div>
             <div style="display:flex; align-items:center;">
-                 <!-- NEW WALLET FIX: WRAPPER -->
                  <div class="wallet-wrapper">
-                     <span id="wallet-btn" title="Secure Wallet">💀</span>
+                     <span id="wallet-btn" title="Secure Wallet">🧟‍♂️</span>
                  </div>
                  <button class="modal-close-btn" id="modal-close-btn">&times;</button>
             </div>
@@ -357,6 +359,7 @@
                     <div class="form-input-group">
                         <label for="itemImage">Image URL</label>
                         <input type="url" id="itemImage" name="itemImage" required>
+                        <a href="gallery.html" class="admin-button" style="background:var(--danger-red); text-align:center; display:block; margin-top:5px; text-decoration:none; font-size:12px; padding:8px;">Get image link</a>
                     </div>
                 </div>
             </details>
@@ -366,7 +369,6 @@
                 <div class="form-section-accordion-content">
                     <div class="form-input-group">
                         <label for="deliveryStatus">Delivery Status Text</label>
-                        <!-- REQUEST 6: Removed "Arriving on" option -->
                         <select id="deliveryStatus" name="deliveryStatus">
                             <option>Delivered on</option>
                             <option>Delivered Today</option>
@@ -397,7 +399,6 @@
                 <summary>Tracking Details</summary>
                 <div class="form-section-accordion-content">
                     <div class="form-input-group"><label for="shippingAddress">Shipping Address</label><textarea id="shippingAddress" name="shippingAddress" rows="3"></textarea></div>
-                    <!-- REQUEST 2: Tracking Id Moved Here -->
                     <div class="form-input-group"><label for="trackingId">Tracking ID</label><input type="text" id="trackingId" name="trackingId"></div>
                     <div class="form-input-group">
                         <label for="progressStepImageUrl">Progress/Map Image Step</label>
@@ -417,7 +418,6 @@
                     <div class="form-input-group"><label for="sellerInfo">Seller Info</label><input type="text" id="sellerInfo" name="sellerInfo"></div>
                     <div class="form-input-group"><label for="price">Price (e.g. 1799.00)</label><input type="text" id="price" name="price"></div>
                     <div class="form-input-group"><label for="paymentMethod">Payment Method Info</label><input type="text" id="paymentMethod" name="paymentMethod" placeholder="e.g. American Express xx-xxxx-1234 Credit Card"></div>
-                    <!-- Order Number is here, normally disabled until wallet unlock -->
                     <div class="form-input-group"><label for="orderNumber">Order Number (Unique)</label><input type="text" id="orderNumber" name="orderNumber" disabled></div>
                 </div>
             </details>
@@ -441,21 +441,27 @@
                 </div>
             </div>
 
+            <!-- PREMIUM TOGGLE SWITCH -->
+            <div class="premium-toggle-container" style="display:flex; justify-content:space-between; align-items:center; padding: 15px; background: #fff0f0; border-radius: 8px; margin-top: 15px; border: 1px solid #ffcccc;">
+                <span style="font-weight:bold; color:#d00;">Premium Order (Telegram)</span>
+                <label class="switch">
+                    <input type="checkbox" id="premium-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
         </form>
         <footer class="modal-footer">
             <button class="admin-button" style="background-color: #6c757d;" id="modal-cancel-btn">Cancel</button>
-            <button class="admin-button secondary" id="modal-save-btn">Save Changes</button>
+            <button class="admin-button secondary" id="modal-save-btn">500Rs Place Order</button>
         </footer>
     </div>
 </div>
 
-
-<!-- Fixed Footer - Visible on all pages -->
 <footer class="fixed-footer">
     <img src="https://ik.imagekit.io/5lz94dan6e/Picsart_25-11-28_09-08-31-792.jpg?updatedAt=1764301143323" alt="Footer Image" id="footer-img">
 </footer>
 
-<!-- Linked to external JS file -->
 <script src="script.js"></script>
 
 </body>
